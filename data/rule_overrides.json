@@ -1,0 +1,10 @@
+{
+  "R-HIDDEN-01": {
+    "enabled": true,
+    "weight": 35
+  },
+  "R-PARENT-01": {
+    "enabled": true,
+    "weight": 24
+  }
+}

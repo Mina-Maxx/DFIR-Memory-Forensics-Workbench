@@ -1,0 +1,2553 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: #0b0f19; color-scheme: dark;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0b0f19">
+  <style>
+    /* Critical dark background prevents white flash during page refresh */
+    :root, html, body {
+      background-color: #0b0f19 !important;
+      color: #e2e8f0;
+      color-scheme: dark;
+      margin: 0;
+      padding: 0;
+    }
+    #app-root {
+      background-color: #0b0f19 !important;
+      min-height: 100vh;
+    }
+  </style>
+  <title>Volatility 3 DFIR Web Suite</title>
+  <style id="forensic-theme">
+/* ==========================================================================
+   Volatility 3 DFIR Web Application — Modern Cyber-Forensic Design System
+   ========================================================================== */
+
+:root {
+  --bg-primary: #0a0e17;
+  --bg-secondary: #111827;
+  --bg-surface: #1e293b;
+  --bg-card: #151e2e;
+  --bg-hover: #1f2d42;
+  --bg-active: #26354d;
+  
+  --border-color: #2a374a;
+  --border-focus: #38bdf8;
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  
+  --accent-cyan: #06b6d4;
+  --accent-blue: #38bdf8;
+  --accent-indigo: #6366f1;
+  --accent-purple: #a855f7;
+  
+  --risk-critical: #ef4444;
+  --risk-high: #f97316;
+  --risk-suspicious: #eab308;
+  --risk-normal: #10b981;
+  --risk-unknown: #64748b;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* App Layout */
+#app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Top Navigation Bar */
+header.app-header {
+  height: 60px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.brand-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  font-size: 22px;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6));
+}
+
+.brand-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text-primary);
+}
+.brand-title span {
+  color: var(--accent-cyan);
+}
+
+.brand-badge {
+  font-size: 11px;
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.context-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.context-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.context-pill:hover {
+  border-color: var(--accent-blue);
+  background: var(--bg-hover);
+}
+.context-pill .pill-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.context-pill .pill-val {
+  color: var(--accent-blue);
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+.btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+}
+.btn-primary {
+  background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+  border: none;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+}
+.btn-primary:hover {
+  box-shadow: 0 0 18px rgba(6, 182, 212, 0.6);
+  transform: translateY(-1px);
+}
+.btn-danger {
+  background: var(--risk-critical);
+  border-color: var(--risk-critical);
+  color: white;
+}
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* Main Container Split: Sidebar + Content */
+.main-wrapper {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Modern Sidebar */
+aside.app-sidebar {
+  width: 240px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.nav-group-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  padding: 16px 18px 6px;
+}
+
+.nav-links {
+  list-style: none;
+  padding: 0 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 2px;
+}
+.nav-item:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+.nav-item.active {
+  color: #fff;
+  background: var(--bg-surface);
+  border-left: 3px solid var(--accent-cyan);
+  font-weight: 600;
+}
+.nav-item .nav-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+/* Sidebar Footer Status */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 14px;
+  border-top: 1px solid var(--border-color);
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--risk-normal);
+  font-weight: 600;
+}
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--risk-normal);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--risk-normal);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+/* Content Area */
+main.app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-primary);
+  position: relative;
+}
+
+.page-view {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+.page-view.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Page Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.page-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Metric Cards Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+.metric-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-cyan);
+}
+.metric-card.critical::before { background: var(--risk-critical); }
+.metric-card.warning::before { background: var(--risk-high); }
+.metric-card.success::before { background: var(--risk-normal); }
+.metric-card.purple::before { background: var(--accent-purple); }
+
+.metric-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.metric-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+.metric-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Cards & Panels */
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+.panel-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(17, 24, 39, 0.4);
+}
+.panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-body {
+  padding: 16px 20px;
+}
+
+/* Data Tables */
+.table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-card);
+}
+table.dfir-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+table.dfir-table th {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  padding: 10px 14px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+table.dfir-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(42, 55, 74, 0.5);
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+table.dfir-table tbody tr:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+table.dfir-table tbody tr.selected {
+  background: var(--bg-active);
+  border-left: 3px solid var(--accent-cyan);
+}
+
+/* Risk Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+.badge-critical {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--risk-critical);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.badge-high {
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--risk-high);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+.badge-suspicious {
+  background: rgba(234, 179, 8, 0.15);
+  color: var(--risk-suspicious);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+.badge-normal {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--risk-normal);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.badge-purple {
+  background: rgba(168, 85, 247, 0.15);
+  color: var(--accent-purple);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+/* Filter Toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.search-input {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  width: 260px;
+  outline: none;
+  transition: all 0.2s;
+}
+.search-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.2);
+}
+.select-input {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Interactive Process Tree */
+.tree-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.tree-node {
+  margin-left: 20px;
+  position: relative;
+  padding-left: 12px;
+}
+.tree-node::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 14px;
+  width: 10px;
+  height: 1px;
+  background: var(--border-color);
+}
+.tree-node::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-color);
+}
+.tree-node:last-child::after {
+  height: 15px;
+}
+.tree-node-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 5px 12px;
+  border-radius: 6px;
+  margin: 3px 0;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tree-node-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+}
+.tree-node-item.selected {
+  border-color: var(--accent-cyan);
+  background: var(--bg-active);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+}
+
+/* Force-Directed Graph Viewport */
+.graph-viewport {
+  position: relative;
+  width: 100%;
+  height: 680px;
+  background: radial-gradient(circle at center, #131c2e 0%, #0a0e17 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  user-select: none;
+}
+.graph-viewport svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.graph-controls {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 10;
+}
+.graph-stats {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+.graph-tooltip {
+  position: absolute;
+  display: none;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--border-focus);
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 100;
+  max-width: 320px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* SVG Graph Elements */
+line.graph-edge {
+  stroke: #475569;
+  stroke-width: 1.5;
+  stroke-opacity: 0.6;
+}
+text.graph-edge-label {
+  fill: #94a3b8;
+  font-size: 10px;
+  text-anchor: middle;
+  font-family: var(--font-mono);
+}
+g.graph-node circle {
+  stroke-width: 2;
+  transition: r 0.2s, stroke 0.2s;
+}
+g.graph-node text {
+  fill: #f1f5f9;
+  font-size: 11px;
+  text-anchor: middle;
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+g.graph-node text.graph-node-sub {
+  fill: #94a3b8;
+  font-size: 9.5px;
+  font-weight: 400;
+  font-family: var(--font-mono);
+}
+
+/* Terminal / Bottom Drawer */
+.bottom-drawer {
+  height: 220px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.drawer-header {
+  height: 36px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  cursor: pointer;
+}
+.drawer-tabs {
+  display: flex;
+  gap: 16px;
+}
+.drawer-tab {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.drawer-tab.active {
+  color: var(--accent-cyan);
+}
+.terminal-body {
+  flex: 1;
+  background: #06090e;
+  padding: 10px 16px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.log-line {
+  margin-bottom: 2px;
+}
+.log-time { color: var(--text-muted); margin-right: 8px; }
+.log-info { color: var(--accent-blue); }
+.log-warn { color: var(--risk-suspicious); }
+.log-error { color: var(--risk-critical); }
+.log-success { color: var(--risk-normal); }
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.modal-overlay.active {
+  display: flex !important;
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal-window {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  width: 90%;
+  max-width: 650px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: modalPopIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalPopIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Toast Notifications */
+.toast-card {
+  pointer-events: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--accent-blue);
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-primary);
+  animation: toastSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.toast-card.success { border-left-color: var(--risk-normal); }
+.toast-card.error { border-left-color: var(--risk-critical); }
+.toast-card.warning { border-left-color: var(--risk-suspicious); }
+.toast-card.info { border-left-color: var(--accent-blue); }
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+}
+.modal-close:hover { color: var(--text-primary); }
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+.modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background: var(--bg-card);
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 14px;
+}
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.form-input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+}
+.form-input:focus {
+  border-color: var(--border-focus);
+}
+
+/* Arabic Report Preview Container */
+.report-preview-frame {
+  width: 100%;
+  height: 600px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: #0d121f;
+  color: #e2e8f0;
+}
+
+
+/* Dropzone Uploader */
+.dropzone {
+  border: 2px dashed var(--border-color);
+  border-radius: 12px;
+  background: rgba(17, 24, 39, 0.6);
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.05);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+}
+.dropzone-icon {
+  font-size: 42px;
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.5));
+}
+.dropzone-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.dropzone-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Graph Side Inspector */
+.graph-inspector {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 340px;
+  max-height: calc(100% - 28px);
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--accent-blue);
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+  overflow: hidden;
+  animation: slideInRight 0.2s ease-out;
+}
+@keyframes slideInRight {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.inspector-header {
+  padding: 12px 16px;
+  background: rgba(30, 41, 59, 0.8);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.inspector-title {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.inspector-body {
+  padding: 16px;
+  overflow-y: auto;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.inspector-prop {
+  margin-bottom: 10px;
+}
+.inspector-prop-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.inspector-prop-value {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  word-break: break-all;
+}
+
+/* YARA Editor */
+.code-editor {
+  width: 100%;
+  height: 260px;
+  background: #06090e;
+  color: #38bdf8;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px;
+  outline: none;
+  resize: vertical;
+}
+/* ==========================================================================
+   V2 Forensic Cockpit — Process Focus Drawer & Findings System
+   ========================================================================== */
+
+/* Slide-Over Process Investigation Drawer */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  z-index: 2490;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.drawer-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.process-drawer {
+  position: fixed;
+  top: 0;
+  right: -580px;
+  width: 560px;
+  max-width: 95vw;
+  height: 100vh;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-color);
+  box-shadow: -15px 0 35px rgba(0, 0, 0, 0.7);
+  z-index: 2500;
+  transition: right 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+.process-drawer.open {
+  right: 0;
+}
+
+.drawer-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.drawer-header-bar {
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.drawer-proc-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.drawer-proc-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+}
+.drawer-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.drawer-close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.drawer-action-bar {
+  padding: 10px 20px;
+  background: rgba(17, 24, 39, 0.9);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.drawer-subtabs {
+  display: flex;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+}
+.drawer-subtab {
+  padding: 9px 14px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.drawer-subtab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+.drawer-subtab.active {
+  color: var(--accent-cyan);
+  border-bottom-color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.08);
+}
+
+.drawer-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px;
+}
+.drawer-subtab-pane {
+  display: none;
+}
+.drawer-subtab-pane.active {
+  display: block;
+}
+
+/* Why Suspicious & Explainable Cards */
+.explain-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.explain-card.critical {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.05);
+}
+.explain-card.high {
+  border-color: rgba(249, 115, 22, 0.5);
+  background: rgba(249, 115, 22, 0.05);
+}
+.explain-card.suspicious {
+  border-color: rgba(234, 179, 8, 0.5);
+  background: rgba(234, 179, 8, 0.05);
+}
+.factor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+.factor-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg-surface);
+  border-radius: 6px;
+  border-left: 3px solid var(--accent-cyan);
+  font-size: 12px;
+}
+.factor-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.factor-desc {
+  color: var(--text-secondary);
+  font-size: 11px;
+  margin-top: 2px;
+}
+.factor-points {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--risk-critical);
+  font-size: 11px;
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
+/* Ancestry Chain */
+.ancestry-chain {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0;
+}
+.ancestry-node {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ancestry-node:hover {
+  border-color: var(--accent-cyan);
+  background: var(--bg-hover);
+}
+.ancestry-node.active-node {
+  border-color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.12);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+}
+.ancestry-connector {
+  width: 2px;
+  height: 12px;
+  background: var(--border-color);
+  margin-left: 20px;
+}
+
+/* Findings Status Badges */
+.badge-status-detected { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+.badge-status-triaged { background: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
+.badge-status-investigating { background: rgba(249, 115, 22, 0.15); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.3); }
+.badge-status-confirmed { background: rgba(239, 68, 68, 0.18); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); font-weight: 700; }
+.badge-status-false_positive { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+.badge-status-inconclusive { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+.badge-status-closed { background: rgba(100, 116, 139, 0.15); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.3); }
+
+</style>
+</head>
+<body style="background-color: #0b0f19; color-scheme: dark;">
+  <div id="app-root">
+    
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="brand-area">
+        <span class="brand-logo">🛡️</span>
+        <div class="brand-title">Volatility 3 <span>DFIR Suite</span></div>
+        <span class="brand-badge">WEB V2.0</span>
+      </div>
+
+      <div class="context-bar">
+        <div class="context-pill" id="pill-active-case" title="Click to switch or manage cases">
+          <span class="pill-label">Case:</span>
+          <span class="pill-val" id="header-case-name">Loading...</span>
+        </div>
+        <div class="context-pill" id="pill-active-evidence" title="Click to switch or import evidence">
+          <span class="pill-label">Evidence:</span>
+          <span class="pill-val" id="header-evidence-name">No evidence</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-primary" id="btn-quick-triage">⚡ Run Automated Triage</button>
+        <button class="btn" id="btn-quick-import">➕ Import Dump</button>
+      </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <div class="main-wrapper">
+      
+      <!-- Modern Sidebar Navigation -->
+      <aside class="app-sidebar">
+        <div class="nav-group-title">Investigation</div>
+        <ul class="nav-links">
+          <li class="nav-item active" data-page="page-dashboard">
+            <span class="nav-icon">📊</span> Dashboard
+          </li>
+          <li class="nav-item" data-page="page-cases">
+            <span class="nav-icon">🗂️</span> Cases & Evidence
+          </li>
+          <li class="nav-item" data-page="page-findings">
+            <span class="nav-icon">🛡️</span> Findings &amp; Verdicts
+          </li>
+          <li class="nav-item" data-page="page-upload">
+            <span class="nav-icon">📁</span> File Ingestion & Upload
+          </li>
+        </ul>
+
+        <div class="nav-group-title">Forensic Analysis</div>
+        <ul class="nav-links">
+          <li class="nav-item" data-page="page-processes">
+            <span class="nav-icon">🌳</span> Process Tree
+          </li>
+          <li class="nav-item" data-page="page-graph">
+            <span class="nav-icon">🕸️</span> Forensic Graph
+          </li>
+          <li class="nav-item" data-page="page-network">
+            <span class="nav-icon">🌐</span> Network Sockets
+          </li>
+          <li class="nav-item" data-page="page-timeline">
+            <span class="nav-icon">🕐</span> Event Timeline
+          </li>
+          <li class="nav-item" data-page="page-plugins">
+            <span class="nav-icon">⚙️</span> Plugins Explorer
+          </li>
+        </ul>
+
+        <div class="nav-group-title">Automation & Threat Intel</div>
+        <ul class="nav-links">
+          <li class="nav-item" data-page="page-iocs">
+            <span class="nav-icon">🎯</span> IOCs & Hunter
+          </li>
+          <li class="nav-item" data-page="page-yara">
+            <span class="nav-icon">🧪</span> YARA Memory Scanner
+          </li>
+          <li class="nav-item" data-page="page-playbooks">
+            <span class="nav-icon">▶️</span> Playbooks
+          </li>
+          <li class="nav-item" data-page="page-diff">
+            <span class="nav-icon">⇄</span> Snapshot Diff
+          </li>
+          <li class="nav-item" data-page="page-report">
+            <span class="nav-icon">📑</span> Forensic Report
+          </li>
+          <li class="nav-item" data-page="page-activity">
+            <span class="nav-icon">📋</span> Platform Audit Trail
+          </li>
+        </ul>
+
+        <div class="sidebar-footer">
+          <div class="live-indicator">
+            <div class="live-dot"></div>
+            <span id="sse-status-text">Connected</span>
+          </div>
+          <div>Volatility 3 Framework 2.x</div>
+        </div>
+      </aside>
+
+      <!-- Main Content Views -->
+      <main class="app-content">
+
+        <!-- 1. DASHBOARD VIEW -->
+        <section class="page-view active" id="page-dashboard">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Forensic Investigation Overview</h2>
+              <div class="page-subtitle">Real-time memory forensic metrics and automated correlation analytics</div>
+            </div>
+            <button class="btn btn-sm" id="btn-refresh-dashboard">🔄 Refresh</button>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span class="metric-label">Total Processes</span>
+              <span class="metric-value" id="dash-total-procs">0</span>
+              <span class="metric-meta">Enumerated via pslist & psscan</span>
+            </div>
+            <div class="metric-card critical">
+              <span class="metric-label">Critical Threats</span>
+              <span class="metric-value" id="dash-critical-procs" style="color:var(--risk-critical)">0</span>
+              <span class="metric-meta">Hidden or RWX injected</span>
+            </div>
+            <div class="metric-card warning">
+              <span class="metric-label">Suspicious Entities</span>
+              <span class="metric-value" id="dash-suspicious-procs" style="color:var(--risk-suspicious)">0</span>
+              <span class="metric-meta">Heuristic score &ge; 40</span>
+            </div>
+            <div class="metric-card success">
+              <span class="metric-label">Network Sockets</span>
+              <span class="metric-value" id="dash-network-count">0</span>
+              <span class="metric-meta">Active & listening endpoints</span>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <!-- Threat Assessment Panel -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">🛡️ Risk Severity Distribution</span>
+              </div>
+              <div class="panel-body">
+                <div style="display:flex; flex-direction:column; gap:12px;" id="dash-risk-bars">
+                  <div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+                      <span>Critical Risk</span>
+                      <span id="risk-count-critical" style="color:var(--risk-critical); font-weight:700;">0</span>
+                    </div>
+                    <div style="height:6px; background:#2a374a; border-radius:3px; overflow:hidden;">
+                      <div id="bar-critical" style="width:0%; height:100%; background:var(--risk-critical); transition:width 0.5s;"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+                      <span>High Risk</span>
+                      <span id="risk-count-high" style="color:var(--risk-high); font-weight:700;">0</span>
+                    </div>
+                    <div style="height:6px; background:#2a374a; border-radius:3px; overflow:hidden;">
+                      <div id="bar-high" style="width:0%; height:100%; background:var(--risk-high); transition:width 0.5s;"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+                      <span>Suspicious</span>
+                      <span id="risk-count-suspicious" style="color:var(--risk-suspicious); font-weight:700;">0</span>
+                    </div>
+                    <div style="height:6px; background:#2a374a; border-radius:3px; overflow:hidden;">
+                      <div id="bar-suspicious" style="width:0%; height:100%; background:var(--risk-suspicious); transition:width 0.5s;"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+                      <span>Normal</span>
+                      <span id="risk-count-normal" style="color:var(--risk-normal); font-weight:700;">0</span>
+                    </div>
+                    <div style="height:6px; background:#2a374a; border-radius:3px; overflow:hidden;">
+                      <div id="bar-normal" style="width:0%; height:100%; background:var(--risk-normal); transition:width 0.5s;"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Triage Quick Action Card -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">⚡ Automated Memory Triage</span>
+              </div>
+              <div class="panel-body">
+                <p style="color:var(--text-secondary); margin-bottom:16px; font-size:13px;">
+                  Executes the standardized forensic suite (<code>info</code>, <code>pslist</code>, <code>psscan</code>, <code>pstree</code>, <code>cmdline</code>, <code>netscan</code>, <code>malfind</code>) sequentially and correlates results automatically.
+                </p>
+                <div style="display:flex; gap:10px;">
+                  <button class="btn btn-primary" id="btn-dash-start-triage">▶ Start Automated Triage</button>
+                  <button class="btn" id="btn-dash-view-graph">🕸️ Open Relationship Graph</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Plugin Executions -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📋 Recent Volatility 3 Executions</span>
+            </div>
+            <div class="table-container">
+              <table class="dfir-table">
+                <thead>
+                  <tr>
+                    <th>Plugin</th>
+                    <th>Status</th>
+                    <th>Runtime</th>
+                    <th>Result Rows</th>
+                    <th>Start Time</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="dash-executions-tbody">
+                  <tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No plugin executions recorded yet.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. PROCESS TREE VIEW -->
+        <section class="page-view" id="page-processes">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Process Hierarchy & Execution Tree</h2>
+              <div class="page-subtitle">Parent-child execution lineages with heuristic risk evaluations and unlinked DKOM detection</div>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-sm" id="btn-tree-expand">Expand All</button>
+              <button class="btn btn-sm" id="btn-tree-collapse">Collapse All</button>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <input type="text" class="search-input" id="tree-search-input" placeholder="🔍 Search process name, PID, or cmdline...">
+            <select class="select-input" id="tree-risk-filter">
+              <option value="ALL">All Risk Levels</option>
+              <option value="Critical">Critical Threats Only</option>
+              <option value="High Risk">High Risk Only</option>
+              <option value="Suspicious">Suspicious & Above</option>
+              <option value="Normal">Normal Only</option>
+            </select>
+          </div>
+
+          <div class="tree-container" id="process-tree-root">
+            <div style="text-align:center; padding:40px; color:var(--text-muted);">Loading process tree...</div>
+          </div>
+        </section>
+
+        <!-- 3. FORENSIC GRAPH VIEW -->
+        <section class="page-view" id="page-graph">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Interactive Relationship Graph</h2>
+              <div class="page-subtitle">Multi-dimensional force-directed forensic graph: Process trees, sockets, injected memory, and YARA rules</div>
+            </div>
+            <button class="btn btn-sm" id="btn-graph-rebuild">🔄 Rebuild Graph</button>
+          </div>
+
+          <div class="graph-viewport" id="graph-viewport-box">
+            <!-- Floating Controls -->
+            <div class="graph-controls">
+              <select class="select-input" id="graph-layout-selector" style="font-size:12px; padding:4px 8px; font-weight:600;">
+                <option value="force">🕸️ Force-Directed (Physics)</option>
+                <option value="tree">🌳 Hierarchical (Process Lineage)</option>
+                <option value="concentric">🪐 Concentric Orbital (Radial)</option>
+                <option value="clusters">🎯 Risk Severity Clusters</option>
+              </select>
+
+              <input type="text" class="search-input" id="graph-search-node" placeholder="🔍 Find node or PID..." style="width:160px; padding:4px 8px; font-size:12px;">
+
+              <label style="font-size:12px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                <input type="checkbox" id="gf-proc" checked> Processes
+              </label>
+              <label style="font-size:12px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                <input type="checkbox" id="gf-ip" checked> IPs
+              </label>
+              <label style="font-size:12px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                <input type="checkbox" id="gf-mem" checked> RWX Mem
+              </label>
+              <label style="font-size:12px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                <input type="checkbox" id="gf-yara" checked> YARA
+              </label>
+
+              <button class="btn btn-sm" id="btn-graph-zoom-in" title="Zoom In">➕</button>
+              <button class="btn btn-sm" id="btn-graph-zoom-out" title="Zoom Out">➖</button>
+              <button class="btn btn-sm" id="btn-graph-reset-view" title="Reset View">🎯</button>
+              <button class="btn btn-sm" id="btn-graph-export-svg" title="Export Graph Image">📸 Export</button>
+            </div>
+
+            <!-- Stats overlay -->
+            <div class="graph-stats" id="graph-stats-label">
+              Initializing forensic graph...
+            </div>
+
+            <!-- Tooltip -->
+            <div class="graph-tooltip" id="graph-tooltip-box"></div>
+
+            <!-- Floating Side Inspector Panel -->
+            <div class="graph-inspector" id="graph-inspector-panel" style="display:none;">
+              <div class="inspector-header">
+                <span class="inspector-title" id="insp-header-title">🛡️ Forensic Node Details</span>
+                <button class="modal-close" id="btn-close-inspector">&times;</button>
+              </div>
+              <div class="inspector-body" id="insp-content-body">
+                <div style="color:var(--text-muted); text-align:center;">Click any node to inspect details</div>
+              </div>
+            </div>
+
+            <!-- SVG Container -->
+            <svg id="svg-graph"></svg>
+          </div>
+        </section>
+
+        <!-- 4. NETWORK VIEW -->
+        <section class="page-view" id="page-network">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Network Sockets & Connections</h2>
+              <div class="page-subtitle">Extracted via windows.netscan / netstat with automatic external IP classification</div>
+            </div>
+            <button class="btn btn-sm" id="btn-export-network-csv">📥 Export CSV</button>
+          </div>
+
+          <div class="toolbar">
+            <input type="text" class="search-input" id="net-search-input" placeholder="🔍 Search IP, port, or process...">
+            <select class="select-input" id="net-ext-filter">
+              <option value="ALL">All Endpoints</option>
+              <option value="EXTERNAL">External Public IPs Only</option>
+              <option value="INTERNAL">Internal / Loopback Only</option>
+            </select>
+          </div>
+
+          <div class="table-container">
+            <table class="dfir-table">
+              <thead>
+                <tr>
+                  <th>Protocol</th>
+                  <th>Local Address</th>
+                  <th>Remote Address</th>
+                  <th>State</th>
+                  <th>PID</th>
+                  <th>Process Name</th>
+                  <th>Created Time</th>
+                </tr>
+              </thead>
+              <tbody id="network-table-tbody">
+                <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">No network connections available.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 5. IOCs & HUNTER VIEW -->
+        <section class="page-view" id="page-iocs">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Threat Intel & IOC Hunter</h2>
+              <div class="page-subtitle">Automated network harvesting, ReDoS-protected artifact hunting, and STIX 2.1 bundling</div>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-sm" id="btn-harvest-iocs">🌾 Harvest from Network</button>
+              <button class="btn btn-sm" id="btn-download-stix">📦 Export STIX 2.1</button>
+              <button class="btn btn-primary btn-sm" id="btn-add-ioc-modal">➕ Add IOC</button>
+            </div>
+          </div>
+
+          <!-- Hunt Box -->
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-body" style="display:flex; gap:12px; align-items:center;">
+              <input type="text" class="search-input" id="hunt-query-input" placeholder="Enter IP, hash, string, or regex pattern to hunt..." style="flex:1;">
+              <button class="btn btn-primary" id="btn-run-hunt">🎯 Execute Threat Hunt</button>
+            </div>
+            <div id="hunt-results-area" style="padding:0 20px 16px; display:none;">
+              <h4 style="font-size:13px; color:var(--accent-cyan); margin-bottom:8px;">Hunt Matches</h4>
+              <div id="hunt-matches-list" style="max-height:200px; overflow-y:auto; font-family:var(--font-mono); font-size:12px;"></div>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="dfir-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Indicator Value</th>
+                  <th>Severity</th>
+                  <th>Source</th>
+                  <th>Description</th>
+                  <th>Associated PID</th>
+                </tr>
+              </thead>
+              <tbody id="iocs-table-tbody">
+                <tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">No IOCs recorded.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 6. TIMELINE VIEW -->
+        <section class="page-view" id="page-timeline">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Forensic Event Timeline</h2>
+              <div class="page-subtitle">Consolidated chronological timeline of process creations, terminations, and network sockets</div>
+            </div>
+            <button class="btn btn-sm" id="btn-generate-timeline">🔄 Regenerate Timeline</button>
+          </div>
+
+          <div class="toolbar">
+            <input type="text" class="search-input" id="timeline-search" placeholder="🔍 Search timeline events...">
+            <select class="select-input" id="timeline-filter">
+              <option value="ALL">All Event Types</option>
+              <option value="Process Create">Process Creations Only</option>
+              <option value="Process Exit">Process Terminations Only</option>
+              <option value="Network Socket">Network Sockets Only</option>
+            </select>
+          </div>
+
+          <div class="table-container">
+            <table class="dfir-table">
+              <thead>
+                <tr>
+                  <th>Timestamp (UTC)</th>
+                  <th>Event Type</th>
+                  <th>PID</th>
+                  <th>Process</th>
+                  <th>Severity</th>
+                  <th>Event Description</th>
+                </tr>
+              </thead>
+              <tbody id="timeline-table-tbody">
+                <tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">No timeline events found.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 7. PLUGINS VIEW -->
+        <section class="page-view" id="page-plugins">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Volatility 3 Plugins Explorer</h2>
+              <div class="page-subtitle">Direct catalog of discovered Volatility 3 plugins with dynamic parameter execution</div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 320px 1fr; gap:20px; height:calc(100vh - 200px);">
+            <!-- Plugin List -->
+            <div class="panel" style="overflow:hidden; display:flex; flex-direction:column; margin-bottom:0;">
+              <div style="padding:10px;">
+                <input type="text" class="search-input" id="plugin-filter-input" placeholder="🔍 Filter plugins..." style="width:100%;">
+              </div>
+              <div style="flex:1; overflow-y:auto; padding:0 10px 10px;" id="plugins-list-container">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+            <!-- Plugin Runner Panel -->
+            <div class="panel" style="overflow-y:auto; margin-bottom:0;">
+              <div class="panel-header">
+                <span class="panel-title" id="selected-plugin-title">Select a Plugin</span>
+              </div>
+              <div class="panel-body">
+                <p id="selected-plugin-desc" style="color:var(--text-secondary); margin-bottom:16px;">Select a plugin from the list to view documentation and execute it against the active evidence.</p>
+                
+                <div class="form-group">
+                  <label class="form-label">Extra Arguments (JSON array or flags e.g. ["--pid", "1234"])</label>
+                  <input type="text" class="form-input" id="plugin-args-input" placeholder='["--pid", "1234"]'>
+                </div>
+
+                <button class="btn btn-primary" id="btn-execute-plugin" disabled>⚡ Run Plugin</button>
+
+                <div style="margin-top:24px;">
+                  <h4 style="font-size:14px; margin-bottom:10px;">Execution Output</h4>
+                  <div class="table-container" style="max-height:400px;">
+                    <table class="dfir-table" id="plugin-result-table">
+                      <thead id="plugin-result-thead"></thead>
+                      <tbody id="plugin-result-tbody">
+                        <tr><td style="text-align:center; padding:20px; color:var(--text-muted);">No output yet.</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. PLAYBOOKS VIEW -->
+        <section class="page-view" id="page-playbooks">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Automated Investigation Playbooks</h2>
+              <div class="page-subtitle">Multi-step forensic workflow recipes executed sequentially with real-time feedback</div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:20px;" id="playbooks-cards-container">
+            <!-- Dynamically populated -->
+          </div>
+        </section>
+
+        <!-- 9. SNAPSHOT DIFF VIEW -->
+        <section class="page-view" id="page-diff">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Memory Snapshot Differential Analysis</h2>
+              <div class="page-subtitle">Compare two forensic memory dumps to highlight ephemeral malware, injections, and socket deltas</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body" style="display:flex; gap:16px; align-items:flex-end;">
+              <div class="form-group" style="flex:1; margin-bottom:0;">
+                <label class="form-label">Baseline Snapshot (A)</label>
+                <select class="select-input" id="diff-select-a" style="width:100%;"></select>
+              </div>
+              <div class="form-group" style="flex:1; margin-bottom:0;">
+                <label class="form-label">Target Snapshot (B)</label>
+                <select class="select-input" id="diff-select-b" style="width:100%;"></select>
+              </div>
+              <button class="btn btn-primary" id="btn-execute-diff">⇄ Compare Snapshots</button>
+            </div>
+          </div>
+
+          <div id="diff-results-area" style="display:none;">
+            <div class="metrics-grid">
+              <div class="metric-card critical">
+                <span class="metric-label">Processes in B Only (New)</span>
+                <span class="metric-value" id="diff-stat-new">0</span>
+              </div>
+              <div class="metric-card warning">
+                <span class="metric-label">Processes in A Only (Terminated)</span>
+                <span class="metric-value" id="diff-stat-term">0</span>
+              </div>
+              <div class="metric-card success">
+                <span class="metric-label">Common Processes</span>
+                <span class="metric-value" id="diff-stat-common">0</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 10. FORENSIC REPORT VIEW -->
+        <section class="page-view" id="page-report">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Court-Admissible Arabic RTL Forensic Report</h2>
+              <div class="page-subtitle">Compliant with ISO/IEC 27037 digital evidence standards with strict English LTR isolation</div>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-primary" id="btn-generate-report">📑 Generate New Report</button>
+              <button class="btn" id="btn-export-full-pkg">📦 Export Investigation Package</button>
+            </div>
+          </div>
+
+          <div id="report-container" style="flex:1; display:flex; flex-direction:column;">
+            <iframe class="report-preview-frame" id="report-iframe" style="background-color: #0d121f; border: 1px solid var(--border-color); display: none;" srcdoc="<!DOCTYPE html><html style='background-color:#0d121f;'><head><meta name='color-scheme' content='dark'></head><body style='background-color:#0d121f;'></body></html>"></iframe>
+          </div>
+        </section>
+
+        <!-- 11. CASES & EVIDENCE VIEW -->
+        <section class="page-view" id="page-cases">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Case & Evidence Management</h2>
+              <div class="page-subtitle">Chain of custody auditing, cryptographic hashing (SHA-256, MD5), and workspace isolation</div>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-primary btn-sm" id="btn-modal-create-case">➕ New Case</button>
+              <button class="btn btn-sm" id="btn-modal-import-ev">💾 Import Memory Evidence</button>
+            </div>
+          </div>
+
+          <!-- Cases Table -->
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">🗂️ Active Investigation Cases</span></div>
+            <div class="table-container">
+              <table class="dfir-table">
+                <thead>
+                  <tr>
+                    <th>Case ID</th>
+                    <th>Name</th>
+                    <th>Investigator</th>
+                    <th>Evidence Count</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="cases-table-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Evidence Table -->
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">💾 Evidence Images for Active Case</span></div>
+            <div class="table-container">
+              <table class="dfir-table">
+                <thead>
+                  <tr>
+                    <th>Filename</th>
+                    <th>Size</th>
+                    <th>SHA-256</th>
+                    <th>OS Type</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="evidence-table-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      
+        <!-- NEW: FILE INGESTION & UPLOAD VIEW -->
+        <section class="page-view" id="page-upload">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Memory Dump Ingestion Center</h2>
+              <div class="page-subtitle">Direct file streaming, cryptographic SHA-256 validation, and automatic case attachment</div>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-primary btn-sm" id="btn-browse-dump">📁 Browse Files</button>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:20px; margin-bottom:20px;">
+            <!-- Dropzone Box -->
+            <div class="panel">
+              <div class="panel-header"><span class="panel-title">📥 Upload Memory Image</span></div>
+              <div class="panel-body">
+                <div class="dropzone" id="dump-dropzone">
+                  <span class="dropzone-icon">💾</span>
+                  <div class="dropzone-title">Drag & Drop Memory Dump Here</div>
+                  <div class="dropzone-subtitle">or click to choose from your device</div>
+                  <div style="font-size:11px; color:var(--accent-cyan); margin-top:6px;">Supported: .raw, .dmp, .vmem, .mem, .lime, .img, .bin</div>
+                  <input type="file" id="file-dump-input" style="display:none;" accept=".raw,.dmp,.vmem,.mem,.lime,.img,.bin">
+                </div>
+
+                <div style="margin-top:16px;">
+                  <div class="form-group">
+                    <label class="form-label">Assign to Investigation Case</label>
+                    <select class="select-input" id="upload-case-select" style="width:100%;"></select>
+                  </div>
+
+                  <div id="upload-progress-container" style="display:none; margin-top:14px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                      <span id="upload-status-text">Uploading memory dump to workspace...</span>
+                      <span id="upload-pct-label" style="font-weight:700; color:var(--accent-cyan);">0%</span>
+                    </div>
+                    <div style="height:8px; background:#2a374a; border-radius:4px; overflow:hidden;">
+                      <div id="upload-progress-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #0284c7, #06b6d4); transition:width 0.15s;"></div>
+                    </div>
+                  </div>
+
+                  <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+                    <button class="btn btn-primary" id="btn-start-upload" disabled>🚀 Upload & Calculate Hashes</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ingestion Guidelines -->
+            <div class="panel">
+              <div class="panel-header"><span class="panel-title">🛡️ Forensic Evidence Integrity Guidelines</span></div>
+              <div class="panel-body" style="font-size:13px; color:var(--text-secondary); line-height:1.7;">
+                <p style="margin-bottom:12px;">
+                  Upon ingestion, the system automatically computes dual <b>SHA-256</b> and <b>MD5</b> cryptographic hashes directly against the raw image blocks to maintain chain-of-custody compliance.
+                </p>
+                <div style="background:var(--bg-surface); padding:12px; border-radius:6px; border:1px solid var(--border-color); margin-bottom:12px;">
+                  <div style="font-weight:700; color:var(--accent-blue); margin-bottom:4px;">Memory Image Best Practices:</div>
+                  <ul style="padding-left:18px; font-size:12px; color:var(--text-secondary);">
+                    <li>Preserve original timestamps and read-only attributes.</li>
+                    <li>Avoid mounting dumps directly prior to analysis.</li>
+                    <li>Verify hashes match acquisition field notes.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- NEW: YARA SCANNER VIEW -->
+        <section class="page-view" id="page-yara">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Live Memory YARA Scanner</h2>
+              <div class="page-subtitle">Signature-based artifact hunting across process memory regions, dumps, and injected DLLs</div>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-primary btn-sm" id="btn-run-yara-scan">▶ Execute YARA Scan</button>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1.1fr 1fr; gap:20px; margin-bottom:20px;">
+            <!-- Rule Editor Box -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">📝 Rule Configuration</span>
+                <select class="select-input" id="yara-preset-select" style="font-size:12px; padding:3px 8px;">
+                  <option value="cobalt_strike">Cobalt Strike Beacon</option>
+                  <option value="mimikatz">Mimikatz LSASS Dump</option>
+                  <option value="reverse_shell">PowerShell Reverse Shell</option>
+                  <option value="ransomware_vss">Ransomware VSS Wipe</option>
+                  <option value="custom">[Custom Rule]</option>
+                </select>
+              </div>
+              <div class="panel-body">
+                <textarea class="code-editor" id="yara-rule-editor" spellcheck="false"></textarea>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+                  <span id="yara-validation-status" style="font-size:12px; color:var(--risk-normal);">Rule syntax valid</span>
+                  <button class="btn btn-sm" id="btn-validate-yara">✓ Validate Syntax</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Matches Summary Box -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">🎯 Scan Detections (<span id="yara-match-counter">0</span>)</span>
+              </div>
+              <div class="panel-body" style="padding:0;">
+                <div class="table-container" style="border:none; max-height:360px;">
+                  <table class="dfir-table">
+                    <thead>
+                      <tr>
+                        <th>Rule</th>
+                        <th>Target / PID</th>
+                        <th>Matched String</th>
+                      </tr>
+                    </thead>
+                    <tbody id="yara-matches-tbody">
+                      <tr><td colspan="3" style="text-align:center; padding:30px; color:var(--text-muted);">No scan executed yet. Click "Execute YARA Scan" above.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- NEW: AUDIT TRAIL & ACTIVITY LOG VIEW -->
+        <section class="page-view" id="page-activity">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Platform Audit Trail & User Activity</h2>
+              <div class="page-subtitle">Real-time chronologies of analyst actions, telemetry signals, and server-side execution metrics</div>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-sm" id="btn-refresh-activity">🔄 Refresh</button>
+              <button class="btn btn-sm" id="btn-download-activity-log">📥 Download Log (.log)</button>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <input type="text" class="search-input" id="activity-search-input" placeholder="🔍 Search activity logs...">
+            <select class="select-input" id="activity-category-filter">
+              <option value="ALL">All Categories</option>
+              <option value="TAB_NAVIGATION">Tab Navigation</option>
+              <option value="PROCESS_INSPECT">Process Inspection</option>
+              <option value="GRAPH_ACTION">Graph Actions</option>
+              <option value="SEARCH">Searches & Filters</option>
+              <option value="FILE_UPLOAD">File Uploads</option>
+              <option value="CASE_ACTION">Case Management</option>
+              <option value="REPORT_ACTION">Forensic Reports</option>
+            </select>
+          </div>
+
+          <div class="table-container" style="max-height:calc(100vh - 280px);">
+            <table class="dfir-table">
+              <thead>
+                <tr>
+                  <th style="width:180px;">Timestamp</th>
+                  <th style="width:160px;">Category</th>
+                  <th style="width:160px;">Action</th>
+                  <th>Details & Context</th>
+                  <th style="width:100px;">Client IP</th>
+                </tr>
+              </thead>
+              <tbody id="activity-table-tbody">
+                <tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted);">Loading live activity logs...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- FINDINGS & VERDICTS WORKSPACE VIEW -->
+        <section class="page-view" id="page-findings">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Forensic Findings &amp; Analyst Assessments</h2>
+              <div class="page-subtitle">Evidence-backed incident findings with analyst lifecycle verdicts, MITRE ATT&amp;CK mappings, and audit trails</div>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-sm" id="btn-refresh-findings">🔄 Refresh</button>
+              <button class="btn btn-primary btn-sm" id="btn-create-finding-modal">➕ New Finding</button>
+            </div>
+          </div>
+
+          <!-- Metrics summary cards -->
+          <div class="metrics-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px;">
+            <div class="metric-card">
+              <span class="metric-label">Total Findings</span>
+              <span class="metric-value" id="findings-total-count">0</span>
+              <span class="metric-meta">Active case scope</span>
+            </div>
+            <div class="metric-card critical">
+              <span class="metric-label">Confirmed Threats</span>
+              <span class="metric-value" id="findings-confirmed-count" style="color:var(--risk-critical)">0</span>
+              <span class="metric-meta">Analyst confirmed</span>
+            </div>
+            <div class="metric-card high">
+              <span class="metric-label">Under Investigation</span>
+              <span class="metric-value" id="findings-investigating-count" style="color:var(--risk-high)">0</span>
+              <span class="metric-meta">Active triage/analysis</span>
+            </div>
+            <div class="metric-card normal">
+              <span class="metric-label">False Positives</span>
+              <span class="metric-value" id="findings-fp-count" style="color:var(--risk-normal)">0</span>
+              <span class="metric-meta">Exonerated benign</span>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <input type="text" class="search-input" id="findings-search-input" placeholder="🔍 Search findings, entities, or summaries..." style="width:280px;">
+            <select class="select-input" id="findings-status-filter">
+              <option value="ALL">All Lifecycle Statuses</option>
+              <option value="detected">Detected</option>
+              <option value="triaged">Triaged</option>
+              <option value="investigating">Investigating</option>
+              <option value="confirmed">Confirmed Threat</option>
+              <option value="false_positive">False Positive</option>
+              <option value="inconclusive">Inconclusive</option>
+              <option value="closed">Closed</option>
+            </select>
+            <select class="select-input" id="findings-severity-filter">
+              <option value="ALL">All Severities</option>
+              <option value="Critical">Critical</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+              <option value="Informational">Informational</option>
+            </select>
+          </div>
+
+          <div class="table-container" style="max-height:calc(100vh - 340px);">
+            <table class="dfir-table" id="findings-table">
+              <thead>
+                <tr>
+                  <th style="width:110px;">Severity</th>
+                  <th>Finding Title &amp; Summary</th>
+                  <th style="width:150px;">Associated Entity</th>
+                  <th style="width:110px;">Confidence</th>
+                  <th style="width:140px;">Analyst Verdict</th>
+                  <th style="width:100px;">Evidence</th>
+                  <th style="width:170px; text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="findings-table-tbody">
+                <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">No findings recorded for this case yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- Live Terminal / Bottom Drawer -->
+    <footer class="bottom-drawer" id="terminal-drawer">
+      <div class="drawer-header" id="drawer-toggle">
+        <div class="drawer-tabs">
+          <span class="drawer-tab active" data-tab="tab-terminal">📟 Live Volatility 3 Terminal</span>
+          <span class="drawer-tab" data-tab="tab-jobs">⚙️ Active Jobs (<span id="active-jobs-counter">0</span>)</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <button class="btn btn-sm" id="btn-clear-terminal" style="padding:2px 8px; font-size:11px; background:transparent;">🧹 Clear Terminal</button>
+          <div style="font-size:11px; color:var(--text-muted); cursor:pointer;" id="drawer-chevron-btn">
+            <span id="drawer-chevron">▼</span> Minimize
+          </div>
+        </div>
+      </div>
+      <div class="terminal-body" id="terminal-log-output">
+        <div class="log-line"><span class="log-time">[System]</span> <span class="log-info">Volatility 3 DFIR Web Application ready. SSE telemetry online.</span></div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Modal: Create Case -->
+  <div class="modal-overlay" id="modal-create-case" style="display: none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        <span class="modal-title">Create New Investigation Case</span>
+        <button class="modal-close" data-close="modal-create-case">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Case ID (Optional, auto-generated if blank)</label>
+          <input type="text" class="form-input" id="new-case-id" placeholder="DFIR-2026-001">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Case Name *</label>
+          <input type="text" class="form-input" id="new-case-name" placeholder="Ransomware Incident Alpha" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Lead Investigator</label>
+          <input type="text" class="form-input" id="new-case-investigator" placeholder="Analyst Mina">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description / Scope</label>
+          <textarea class="form-input" id="new-case-desc" rows="3" placeholder="Scope of the incident investigation..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-close="modal-create-case">Cancel</button>
+        <button class="btn btn-primary" id="btn-submit-create-case">Create Case</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Import Evidence -->
+  <div class="modal-overlay" id="modal-import-evidence" style="display: none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        <span class="modal-title">Import Memory Dump Evidence</span>
+        <button class="modal-close" data-close="modal-import-evidence">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Target Case</label>
+          <select class="select-input" id="import-case-select" style="width:100%;"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full File Path on Server Machine *</label>
+          <input type="text" class="form-input" id="import-filepath" placeholder="C:\dumps\target_memory.raw" required>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Supported: .raw, .dmp, .mem, .vmem, .img, .lime, .bin</div>
+        </div>
+        <div id="import-progress-box" style="display:none; margin-top:12px;">
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+            <span>Computing SHA-256 & MD5 hashes...</span>
+            <span id="import-hash-pct">0%</span>
+          </div>
+          <div style="height:6px; background:#2a374a; border-radius:3px; overflow:hidden;">
+            <div id="import-hash-bar" style="width:0%; height:100%; background:var(--accent-cyan); transition:width 0.2s;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-close="modal-import-evidence">Cancel</button>
+        <button class="btn btn-primary" id="btn-submit-import-evidence">Import & Calculate Hashes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add IOC -->
+  <div class="modal-overlay" id="modal-add-ioc" style="display: none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        <span class="modal-title">Register Indicator of Compromise (IOC)</span>
+        <button class="modal-close" data-close="modal-add-ioc">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">IOC Type</label>
+          <select class="select-input" id="ioc-type-select" style="width:100%;">
+            <option value="ip">IP Address</option>
+            <option value="domain">Domain / FQDN</option>
+            <option value="sha256">SHA-256 Hash</option>
+            <option value="md5">MD5 Hash</option>
+            <option value="process">Malicious Process Name</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Value *</label>
+          <input type="text" class="form-input" id="ioc-value-input" placeholder="e.g. 198.51.100.45" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Severity</label>
+          <select class="select-input" id="ioc-severity-select" style="width:100%;">
+            <option value="Critical">Critical</option>
+            <option value="High" selected>High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description / Attribution</label>
+          <input type="text" class="form-input" id="ioc-desc-input" placeholder="C2 beaconing address">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-close="modal-add-ioc">Cancel</button>
+        <button class="btn btn-primary" id="btn-submit-add-ioc">Add Indicator</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Custom Forensic Confirm Dialog -->
+  <div class="modal-overlay" id="modal-confirm-dialog" style="display: none; z-index: 2000;">
+    <div class="modal-window" style="max-width: 480px; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
+      <div class="modal-header" style="background: rgba(239, 68, 68, 0.08); border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div id="modal-confirm-icon-box" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(239, 68, 68, 0.2); color: var(--risk-critical); font-size: 16px;">
+            ⚠️
+          </div>
+          <span class="modal-title" id="modal-confirm-title" style="color: var(--text-primary); font-size: 16px;">Confirm Action</span>
+        </div>
+        <button class="modal-close" id="btn-confirm-x">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <p id="modal-confirm-message" style="font-size: 14px; line-height: 1.6; color: var(--text-primary); margin-bottom: 12px; font-weight: 500;"></p>
+        <div id="modal-confirm-details" style="display: none; font-size: 12px; font-family: var(--font-mono); background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; color: var(--text-muted); word-break: break-all; margin-top: 10px; max-height: 120px; overflow-y: auto;"></div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 16px 20px; background: rgba(0,0,0,0.2);">
+        <button class="btn" id="btn-confirm-cancel" style="min-width: 90px;">Cancel</button>
+        <button class="btn btn-danger" id="btn-confirm-ok" style="min-width: 130px;">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Custom Forensic Alert Dialog -->
+  <div class="modal-overlay" id="modal-alert-dialog" style="display: none; z-index: 2000;">
+    <div class="modal-window" style="max-width: 520px; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
+      <div class="modal-header" id="modal-alert-header" style="background: rgba(59, 130, 246, 0.08); border-bottom: 1px solid rgba(59, 130, 246, 0.2);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div id="modal-alert-icon-box" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); font-size: 16px;">
+            ℹ️
+          </div>
+          <span class="modal-title" id="modal-alert-title" style="color: var(--text-primary); font-size: 16px;">Notification</span>
+        </div>
+        <button class="modal-close" id="btn-alert-x">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <p id="modal-alert-message" style="font-size: 14px; line-height: 1.6; color: var(--text-primary); margin-bottom: 12px;"></p>
+        <pre id="modal-alert-details" style="display: none; font-size: 11px; font-family: var(--font-mono); background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; color: var(--accent-cyan); white-space: pre-wrap; word-break: break-all; max-height: 180px; overflow-y: auto;"></pre>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; padding: 16px 20px; background: rgba(0,0,0,0.2);">
+        <button class="btn btn-primary" id="btn-alert-ok" style="min-width: 100px;">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide-Over Process Focus Investigation Drawer -->
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <div class="process-drawer" id="process-focus-drawer">
+    <div class="drawer-inner">
+      <!-- Header -->
+      <div class="drawer-header-bar">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:22px;">🔬</span>
+          <div>
+            <div class="drawer-proc-title">
+              <span id="dfd-proc-name">Process Details</span>
+              <span class="badge badge-normal" id="dfd-risk-badge">Normal</span>
+            </div>
+            <div class="drawer-proc-subtitle" id="dfd-proc-meta">PID 0 · PPID 0</div>
+          </div>
+        </div>
+        <button class="drawer-close-btn" id="dfd-close-btn" title="Close Focus Drawer">&times;</button>
+      </div>
+
+      <!-- Quick Action Bar -->
+      <div class="drawer-action-bar">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="btn btn-primary btn-sm" id="dfd-btn-make-finding">🛡️ Promote to Finding</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label style="font-size:11px; color:var(--text-muted);">Verdict:</label>
+          <select class="select-input" id="dfd-verdict-select" style="font-size:11px; padding:4px 8px;">
+            <option value="unassigned">Unassigned</option>
+            <option value="confirmed">Confirmed Threat</option>
+            <option value="investigating">Investigating</option>
+            <option value="false_positive">False Positive</option>
+            <option value="inconclusive">Inconclusive</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Subtabs -->
+      <div class="drawer-subtabs">
+        <button class="drawer-subtab active" data-subtab="dfd-pane-why">⚠️ Why Suspicious?</button>
+        <button class="drawer-subtab" data-subtab="dfd-pane-overview">📋 Process Info</button>
+        <button class="drawer-subtab" data-subtab="dfd-pane-ancestry">🌳 Ancestry</button>
+        <button class="drawer-subtab" data-subtab="dfd-pane-sockets">🌐 Sockets (<span id="dfd-sockets-count">0</span>)</button>
+        <button class="drawer-subtab" data-subtab="dfd-pane-mem">💉 Injections (<span id="dfd-mem-count">0</span>)</button>
+        <button class="drawer-subtab" data-subtab="dfd-pane-dlls">📚 DLLs (<span id="dfd-dlls-count">0</span>)</button>
+      </div>
+
+      <!-- Content Area -->
+      <div class="drawer-content-scroll">
+        <!-- Pane 1: Why Suspicious (Explainable rules & detections) -->
+        <div class="drawer-subtab-pane active" id="dfd-pane-why">
+          <div id="dfd-explain-card" class="explain-card">
+            <div style="font-weight:700; font-size:13px; color:var(--text-primary); margin-bottom:6px;" id="dfd-risk-summary-title">Risk Assessment</div>
+            <p style="font-size:12px; color:var(--text-secondary); line-height:1.5;" id="dfd-risk-explanation">Evaluating forensic indicators...</p>
+          </div>
+
+          <div style="font-weight:600; font-size:12px; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">Contributing Heuristic Rules &amp; Weights</div>
+          <div id="dfd-factors-list" class="factor-list">
+            <div style="color:var(--text-muted); font-size:12px; padding:10px;">No suspicious heuristics triggered.</div>
+          </div>
+
+          <div style="font-weight:600; font-size:12px; color:var(--text-muted); text-transform:uppercase; margin-top:16px; margin-bottom:8px;">Automated Detections</div>
+          <div id="dfd-detections-list" class="factor-list">
+            <div style="color:var(--text-muted); font-size:12px; padding:10px;">No automated detections recorded.</div>
+          </div>
+        </div>
+
+        <!-- Pane 2: Process Info -->
+        <div class="drawer-subtab-pane" id="dfd-pane-overview">
+          <div class="inspector-prop">
+            <div class="inspector-prop-label">Process Name</div>
+            <div class="inspector-prop-value" id="dfd-info-name">-</div>
+          </div>
+          <div class="inspector-prop">
+            <div class="inspector-prop-label">PID / PPID</div>
+            <div class="inspector-prop-value" id="dfd-info-pids">-</div>
+          </div>
+          <div class="inspector-prop">
+            <div class="inspector-prop-label">Executable Image Path</div>
+            <div class="inspector-prop-value" id="dfd-info-path">-</div>
+          </div>
+          <div class="inspector-prop">
+            <div class="inspector-prop-label">Command Line</div>
+            <div class="inspector-prop-value" id="dfd-info-cmd" style="white-space:pre-wrap; background:var(--bg-primary); padding:8px; border-radius:4px; border:1px solid var(--border-color);">-</div>
+          </div>
+          <div class="inspector-prop">
+            <div class="inspector-prop-label">Created Time</div>
+            <div class="inspector-prop-value" id="dfd-info-create">-</div>
+          </div>
+          <div class="inspector-prop">
+            <div class="inspector-prop-label">Exit / Termination Time</div>
+            <div class="inspector-prop-value" id="dfd-info-exit">Still Active / Running at dump time</div>
+          </div>
+          <div class="inspector-prop">
+            <div class="inspector-prop-label">DKOM / Unlinking Status</div>
+            <div class="inspector-prop-value" id="dfd-info-dkom">-</div>
+          </div>
+        </div>
+
+        <!-- Pane 3: Ancestry -->
+        <div class="drawer-subtab-pane" id="dfd-pane-ancestry">
+          <div style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">Click any ancestor or descendant to navigate investigation focus:</div>
+          <div id="dfd-ancestry-list" class="ancestry-chain"></div>
+        </div>
+
+        <!-- Pane 4: Sockets -->
+        <div class="drawer-subtab-pane" id="dfd-pane-sockets">
+          <div id="dfd-sockets-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+
+        <!-- Pane 5: Memory Injections -->
+        <div class="drawer-subtab-pane" id="dfd-pane-mem">
+          <div id="dfd-mem-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+
+        <!-- Pane 6: Loaded Modules (DLLs) -->
+        <div class="drawer-subtab-pane" id="dfd-pane-dlls">
+          <input type="text" class="search-input" id="dfd-dll-search" placeholder="🔍 Filter loaded DLLs..." style="width:100%; margin-bottom:10px;">
+          <div id="dfd-dlls-list" style="max-height:400px; overflow-y:auto; font-family:var(--font-mono); font-size:11px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Create / Edit Finding -->
+  <div class="modal-overlay" id="modal-create-finding" style="display: none;">
+    <div class="modal-window" style="max-width: 650px;">
+      <div class="modal-header">
+        <span class="modal-title">Create Evidence-Backed Finding</span>
+        <button class="modal-close" data-close="modal-create-finding">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Finding Title *</label>
+          <input type="text" class="form-input" id="finding-form-title" placeholder="e.g. Injected Code via Process Hollowing in svchost.exe" required>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Severity *</label>
+            <select class="select-input" id="finding-form-severity" style="width:100%;">
+              <option value="Critical">Critical</option>
+              <option value="High" selected>High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+              <option value="Informational">Informational</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confidence</label>
+            <select class="select-input" id="finding-form-confidence" style="width:100%;">
+              <option value="High" selected>High (Verified Evidence)</option>
+              <option value="Medium">Medium (Strong Correlation)</option>
+              <option value="Low">Low (Heuristic / Inferred)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Initial Status</label>
+            <select class="select-input" id="finding-form-status" style="width:100%;">
+              <option value="detected">Detected</option>
+              <option value="triaged" selected>Triaged</option>
+              <option value="investigating">Investigating</option>
+              <option value="confirmed">Confirmed Threat</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Associated PID</label>
+            <input type="number" class="form-input" id="finding-form-pid" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Process / Entity Name</label>
+            <input type="text" class="form-input" id="finding-form-process" placeholder="e.g. svchost.exe">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Executive Summary</label>
+          <textarea class="form-input" id="finding-form-summary" rows="2" placeholder="Brief summary of the observed malicious activity..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Analyst Assessment &amp; Technical Details</label>
+          <textarea class="form-input" id="finding-form-assessment" rows="3" placeholder="Explain why this finding constitutes a threat, MITRE techniques (e.g. T1055), and next steps..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-close="modal-create-finding">Cancel</button>
+        <button class="btn btn-primary" id="btn-submit-create-finding">Create Forensic Finding</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: View & Manage Finding Details -->
+  <div class="modal-overlay" id="modal-view-finding" style="display: none;">
+    <div class="modal-window" style="max-width: 780px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="modal-title" id="vf-title">Forensic Finding</span>
+          <span class="badge badge-high" id="vf-severity-badge">High</span>
+          <span class="badge badge-status-triaged" id="vf-status-badge">Triaged</span>
+        </div>
+        <button class="modal-close" data-close="modal-view-finding">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Finding Meta Bar -->
+        <div style="display:flex; gap:16px; margin-bottom:16px; background:var(--bg-primary); padding:12px; border-radius:6px; border:1px solid var(--border-color); font-size:12px;">
+          <div><strong style="color:var(--text-muted);">Entity:</strong> <span id="vf-entity" style="color:var(--text-primary); font-family:var(--font-mono);">-</span></div>
+          <div><strong style="color:var(--text-muted);">Confidence:</strong> <span id="vf-confidence" style="color:var(--text-primary);">-</span></div>
+          <div><strong style="color:var(--text-muted);">Investigator:</strong> <span id="vf-investigator" style="color:var(--accent-cyan);">-</span></div>
+          <div><strong style="color:var(--text-muted);">Created:</strong> <span id="vf-created" style="color:var(--text-muted); font-family:var(--font-mono);">-</span></div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Summary</h4>
+          <p id="vf-summary" style="font-size:13px; color:var(--text-secondary); line-height:1.5;">-</p>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Analyst Assessment</h4>
+          <p id="vf-assessment" style="font-size:12.5px; color:var(--text-primary); background:var(--bg-surface); padding:10px; border-radius:6px; border-left:3px solid var(--accent-blue); line-height:1.5;">-</p>
+        </div>
+
+        <!-- Lifecycle Transition Buttons -->
+        <div style="margin-bottom:20px; padding:12px; background:var(--bg-card); border-radius:6px; border:1px solid var(--border-color);">
+          <div style="font-size:12px; font-weight:600; color:var(--text-primary); margin-bottom:8px;">Lifecycle Verdict Transition:</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-sm" id="vf-btn-triage">Triaged</button>
+            <button class="btn btn-sm" id="vf-btn-investigate">Investigating</button>
+            <button class="btn btn-danger btn-sm" id="vf-btn-confirm">⚠️ Confirm Threat</button>
+            <button class="btn btn-sm" id="vf-btn-fp">✅ Mark False Positive</button>
+            <button class="btn btn-sm" id="vf-btn-inconclusive">Inconclusive</button>
+            <button class="btn btn-sm" id="vf-btn-close">Close Finding</button>
+          </div>
+        </div>
+
+        <!-- Linked Supporting Artifacts -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-muted);">Linked Evidence Artifacts (<span id="vf-artifacts-count">0</span>)</h4>
+          </div>
+          <div id="vf-artifacts-list" style="max-height:150px; overflow-y:auto; font-size:12px; display:flex; flex-direction:column; gap:6px;">
+            <div style="color:var(--text-muted);">No artifacts linked yet.</div>
+          </div>
+        </div>
+
+        <!-- Analyst Notes & Audit Log -->
+        <div>
+          <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px;">Analyst Notes &amp; Audit Trail</h4>
+          <div id="vf-notes-list" style="max-height:160px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:12px;"></div>
+          <div style="display:flex; gap:8px;">
+            <input type="text" class="search-input" id="vf-new-note-input" placeholder="Add an analyst note or observation..." style="flex:1;">
+            <button class="btn btn-primary btn-sm" id="vf-btn-add-note">Post Note</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger btn-sm" id="vf-btn-delete" style="margin-right:auto;">🗑️ Delete Finding</button>
+        <button class="btn" data-close="modal-view-finding">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: View Raw Artifact with Provenance -->
+  <div class="modal-overlay" id="modal-view-artifact" style="display: none;">
+    <div class="modal-window" style="max-width: 680px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">📜</span>
+          <span class="modal-title">Forensic Artifact Provenance</span>
+        </div>
+        <button class="modal-close" data-close="modal-view-artifact">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:14px; font-size:12px; background:var(--bg-primary); padding:12px; border-radius:6px; border:1px solid var(--border-color);">
+          <div><strong style="color:var(--text-muted);">Artifact ID:</strong> <span id="va-id" style="font-family:var(--font-mono); color:var(--accent-cyan); word-break:break-all;">-</span></div>
+          <div><strong style="color:var(--text-muted);">Type:</strong> <span id="va-type" style="font-family:var(--font-mono); color:var(--text-primary);">-</span></div>
+          <div><strong style="color:var(--text-muted);">Source Plugin:</strong> <span id="va-plugin" style="color:var(--accent-blue); font-weight:600;">-</span></div>
+          <div><strong style="color:var(--text-muted);">Created:</strong> <span id="va-created" style="font-family:var(--font-mono); color:var(--text-muted);">-</span></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Raw Forensic Data / Payload</label>
+          <pre id="va-raw-data" style="background:#06090e; color:var(--accent-cyan); font-family:var(--font-mono); font-size:11.5px; padding:14px; border-radius:6px; border:1px solid var(--border-color); max-height:280px; overflow-y:auto; white-space:pre-wrap; word-break:break-all;"></pre>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm" id="va-btn-promote-ioc" style="margin-right:auto; display:none; background:rgba(239, 68, 68, 0.2); border:1px solid var(--risk-critical); color:var(--risk-critical);">🎯 Promote to IOC</button>
+        <button class="btn" data-close="modal-view-artifact">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications Container -->
+  <div id="toast-container" style="position: fixed; bottom: 35px; right: 25px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; max-width: 380px;"></div>
+
+  <!-- App Controller -->
+  <script src="/js/app.js?v=2.0.4"></script>
+</body>
+</html>

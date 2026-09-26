@@ -1,0 +1,38 @@
+playbooks:
+  - id: phishing_memory
+    name: Phishing -> Memory Investigation
+    description: >
+      Standard workflow after a phishing case: enumerate processes, build the
+      tree, inspect command lines and network, then check code injection.
+    plugins:
+      - windows.pslist.PsList
+      - windows.pstree.PsTree
+      - windows.psscan.PsScan
+      - windows.cmdline.CmdLine
+      - windows.netscan.NetScan
+      - windows.malfind.Malfind
+    risk_analysis: true
+
+  - id: suspicious_powershell
+    name: Suspicious PowerShell
+    description: >
+      Focused on script hosts: parents, encoded commands, network contacts,
+      loaded DLLs, handles and memory anomalies.
+    plugins:
+      - windows.pslist.PsList
+      - windows.cmdline.CmdLine
+      - windows.netscan.NetScan
+      - windows.dlllist.DllList
+      - windows.malfind.Malfind
+    risk_analysis: true
+
+  - id: quick_look
+    name: Quick Look (fast)
+    description: >
+      Minimal fast set for a first look at an image. For the full picture use
+      Automated Triage.
+    plugins:
+      - windows.pslist.PsList
+      - windows.cmdline.CmdLine
+      - windows.netscan.NetScan
+    risk_analysis: false

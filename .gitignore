@@ -1,0 +1,62 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Application logs
+logs/
+*.log
+workspace/logs/
+
+# SQLite databases & WAL files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+workspace/*.db
+workspace/*.db-shm
+workspace/*.db-wal
+workspace/.run_tmp/
+
+# DFIR Memory Dumps & Large Evidence Binaries (Never commit memory images)
+*.mem
+*.vmem
+*.raw
+*.dmp
+*.lime
+*.bin
+*.dd
+*.img
+workspace/dumps/*
+!workspace/dumps/.gitkeep
+
+# Generated case data, exports, and cache
+workspace/DFIR-*
+workspace/test-*
+workspace/exports/*
+!workspace/exports/.gitkeep
+workspace/cache/*
+!workspace/cache/.gitkeep
