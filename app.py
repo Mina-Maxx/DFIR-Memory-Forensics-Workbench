@@ -94,7 +94,7 @@ app.config["BRIDGE"] = bridge
 from backend.api import (
     cases_bp, evidence_bp, artifacts_bp, findings_bp,
     detections_bp, processes_bp, timeline_bp, graph_bp,
-    iocs_bp, reports_bp
+    iocs_bp, reports_bp, search_bp, coverage_bp, notes_bp
 )
 app.register_blueprint(cases_bp)
 app.register_blueprint(evidence_bp)
@@ -106,6 +106,9 @@ app.register_blueprint(timeline_bp)
 app.register_blueprint(graph_bp)
 app.register_blueprint(iocs_bp)
 app.register_blueprint(reports_bp)
+app.register_blueprint(search_bp)
+app.register_blueprint(coverage_bp)
+app.register_blueprint(notes_bp)
 
 # SSE Event Queues
 sse_queues: list = []

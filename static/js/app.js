@@ -23,6 +23,11 @@
     findings: [],
     activeFinding: null,
     focusedPid: null,
+    investigationFocus: null,
+    artifacts: [],
+    boardItems: [],
+    memoryRegions: [],
+    coverageData: null,
     graph: {
       nodes: [],
       edges: [],
@@ -304,6 +309,11 @@
     setupDrawer();
     setupSSE();
     setupGraphInteractions();
+    setupInvestigationContext();
+    setupGlobalSearch();
+    setupEvidenceBoardEvents();
+    setupArtifactExplorerEvents();
+    setupMemoryAnomaliesEvents();
 
     await loadInitialData();
   }
@@ -442,8 +452,20 @@
       case "page-dashboard":
         await loadDashboardData();
         break;
+      case "page-coverage":
+        await loadCoverageData();
+        break;
+      case "page-board":
+        await loadBoardData();
+        break;
+      case "page-artifacts":
+        await loadArtifactsData();
+        break;
       case "page-processes":
         await loadProcessTreeData();
+        break;
+      case "page-memory":
+        await loadMemoryData();
         break;
       case "page-graph":
         await loadGraphData();
@@ -969,6 +991,17 @@
         badge.className = `badge ${riskClass}`;
       }
 
+      setInvestigationFocus({
+        type: "process",
+        id: p.pid,
+        pid: p.pid,
+        title: `${p.name || 'Process'} (PID ${p.pid})`,
+        name: p.name,
+        risk_score: score,
+        risk_level: level,
+        verdict: p.verdict || risk.verdict || "unassigned"
+      });
+
       // Verdict dropdown
       const verdSel = el("dfd-verdict-select");
       if (verdSel) {
@@ -977,6 +1010,11 @@
           const v = verdSel.value;
           try {
             await API.post(`/api/v2/processes/${p.pid}/verdict`, { verdict: v, evidence_id: state.activeEvidence.id });
+            p.verdict = v;
+            if (state.investigationFocus && state.investigationFocus.pid === p.pid) {
+              state.investigationFocus.verdict = v;
+              updateFocusUI();
+            }
             showToast(`Analyst verdict set to "${v}" for ${p.name} (PID ${p.pid})`, "success");
             logActivity("ANALYST_VERDICT", "Process Verdict", `PID ${p.pid} verdict updated to: ${v}`);
           } catch (err) {
@@ -1216,6 +1254,7 @@
       state.graph.nodes.forEach(n => state.graph.byId[n.id] = n);
 
       renderGraph();
+      renderAccessibleGraphTable();
     } catch (err) {
       el("graph-stats-label").textContent = `Graph build error: ${err.message}`;
     }
@@ -1480,6 +1519,27 @@
       state.graph.scale = Math.min(3.5, Math.max(0.25, state.graph.scale * zoomFactor));
       applyGraphTransform();
     };
+
+    const btnGraphSvg = el("btn-graph-mode-svg");
+    const btnGraphTable = el("btn-graph-mode-table");
+    const boxGraphVisual = el("graph-viewport-box");
+    const boxGraphTable = el("graph-table-view-box");
+
+    if (btnGraphSvg && btnGraphTable) {
+      btnGraphSvg.onclick = () => {
+        btnGraphSvg.classList.add("active");
+        btnGraphTable.classList.remove("active");
+        if (boxGraphVisual) boxGraphVisual.style.display = "block";
+        if (boxGraphTable) boxGraphTable.style.display = "none";
+      };
+      btnGraphTable.onclick = () => {
+        btnGraphTable.classList.add("active");
+        btnGraphSvg.classList.remove("active");
+        if (boxGraphVisual) boxGraphVisual.style.display = "none";
+        if (boxGraphTable) boxGraphTable.style.display = "block";
+        renderAccessibleGraphTable();
+      };
+    }
 
     el("btn-graph-reset-view").onclick = () => {
       logActivity("GRAPH_ACTION", "Reset Zoom", "User clicked Reset Zoom on Forensic Graph");
@@ -3266,6 +3326,983 @@
       `;
     }).join("");
   }
+
+  // =========================================================================
+  // Investigation Focus & Context Bar System
+  // =========================================================================
+  function setInvestigationFocus(entity) {
+    if (!entity) return;
+    state.investigationFocus = entity;
+    if (entity.type === "process" && entity.pid) {
+      state.focusedPid = entity.pid;
+    }
+    updateFocusUI();
+    logActivity("FOCUS", "Set Focus", `Investigation focus set to: [${(entity.type || 'entity').toUpperCase()}] ${entity.title || entity.name || entity.id}`);
+  }
+
+  function clearInvestigationFocus() {
+    state.investigationFocus = null;
+    state.focusedPid = null;
+    updateFocusUI();
+    logActivity("FOCUS", "Clear Focus", "Cleared active investigation focus");
+  }
+
+  function updateFocusUI() {
+    const focus = state.investigationFocus;
+    const bar = el("investigation-context-bar");
+    const pill = el("pill-investigation-focus");
+    const headerVal = el("header-focus-val");
+
+    if (!focus) {
+      if (bar) bar.style.display = "none";
+      if (pill) pill.style.display = "none";
+      if (headerVal) headerVal.textContent = "None";
+      return;
+    }
+
+    if (pill) pill.style.display = "flex";
+    if (headerVal) headerVal.textContent = focus.title || focus.name || `ID ${focus.id}`;
+
+    if (bar) {
+      bar.style.display = "flex";
+      const titleEl = el("ctx-bar-entity-title");
+      const riskEl = el("ctx-bar-risk-badge");
+      const verdictEl = el("ctx-bar-verdict-badge");
+
+      if (titleEl) {
+        titleEl.textContent = `[${(focus.type || "ENTITY").toUpperCase()}] ${focus.title || focus.name || ('ID: ' + focus.id)}`;
+      }
+
+      if (riskEl) {
+        const score = focus.risk_score !== undefined ? focus.risk_score : (focus.score || 0);
+        const level = focus.risk_level || (score >= 70 ? "Critical" : score >= 40 ? "Suspicious" : "Normal");
+        riskEl.textContent = `${level.toUpperCase()} (${score})`;
+        riskEl.className = `badge ${level.toLowerCase().includes("crit") ? "badge-critical" : level.toLowerCase().includes("high") ? "badge-high" : level.toLowerCase().includes("susp") ? "badge-suspicious" : "badge-normal"}`;
+      }
+
+      if (verdictEl) {
+        const verdict = (focus.verdict || "unreviewed").toLowerCase();
+        verdictEl.textContent = `Verdict: ${verdict.toUpperCase()}`;
+        if (verdict.includes("malicious")) {
+          verdictEl.style.background = "rgba(239, 68, 68, 0.25)";
+          verdictEl.style.color = "var(--risk-critical)";
+        } else if (verdict.includes("suspicious")) {
+          verdictEl.style.background = "rgba(245, 158, 11, 0.25)";
+          verdictEl.style.color = "var(--risk-suspicious)";
+        } else if (verdict.includes("benign")) {
+          verdictEl.style.background = "rgba(16, 185, 129, 0.25)";
+          verdictEl.style.color = "var(--risk-normal)";
+        } else {
+          verdictEl.style.background = "rgba(148, 163, 184, 0.15)";
+          verdictEl.style.color = "#94a3b8";
+        }
+      }
+    }
+  }
+
+  function setupInvestigationContext() {
+    const btnOpenFocus = el("btn-ctx-open-focus");
+    if (btnOpenFocus) {
+      btnOpenFocus.onclick = () => {
+        if (!state.investigationFocus) return;
+        const f = state.investigationFocus;
+        if (f.pid || f.type === "process") {
+          openProcessFocusDrawer(f.pid || f.id);
+        } else if (f.type === "artifact") {
+          window.viewArtifact(f.id);
+        } else if (f.type === "finding") {
+          window.viewFinding(f.id);
+        } else {
+          showToast(`Focus target is [${f.type}]: ${f.title || f.name}`, "info");
+        }
+      };
+    }
+
+    const btnPivotProc = el("btn-ctx-pivot-process");
+    if (btnPivotProc) {
+      btnPivotProc.onclick = () => {
+        switchToPage("page-processes");
+        if (state.investigationFocus?.pid) {
+          const searchInput = el("tree-search-input");
+          if (searchInput) {
+            searchInput.value = state.investigationFocus.pid;
+            searchInput.dispatchEvent(new Event("input"));
+          }
+        }
+      };
+    }
+
+    const btnPivotMem = el("btn-ctx-pivot-memory");
+    if (btnPivotMem) {
+      btnPivotMem.onclick = () => {
+        switchToPage("page-memory");
+        if (state.investigationFocus?.pid) {
+          const memSearch = el("mem-search-input");
+          if (memSearch) {
+            memSearch.value = state.investigationFocus.pid;
+            renderMemoryRows();
+          }
+        }
+      };
+    }
+
+    const btnPivotNet = el("btn-ctx-pivot-network");
+    if (btnPivotNet) {
+      btnPivotNet.onclick = () => {
+        switchToPage("page-network");
+        if (state.investigationFocus) {
+          const term = state.investigationFocus.pid || state.investigationFocus.ip || state.investigationFocus.name || "";
+          const netSearch = el("net-search-input");
+          if (netSearch && term) {
+            netSearch.value = term;
+            netSearch.dispatchEvent(new Event("input"));
+          }
+        }
+      };
+    }
+
+    const btnPivotTl = el("btn-ctx-pivot-timeline");
+    if (btnPivotTl) {
+      btnPivotTl.onclick = () => {
+        switchToPage("page-timeline");
+        if (state.investigationFocus) {
+          const term = state.investigationFocus.pid || state.investigationFocus.name || "";
+          const tlSearch = el("timeline-search-input");
+          if (tlSearch && term) {
+            tlSearch.value = term;
+            tlSearch.dispatchEvent(new Event("input"));
+          }
+        }
+      };
+    }
+
+    const btnPivotGraph = el("btn-ctx-pivot-graph");
+    if (btnPivotGraph) {
+      btnPivotGraph.onclick = () => {
+        switchToPage("page-graph");
+        if (state.investigationFocus) {
+          const term = state.investigationFocus.pid || state.investigationFocus.name || state.investigationFocus.title || "";
+          const gSearch = el("graph-search-node");
+          if (gSearch && term) {
+            gSearch.value = term;
+            gSearch.dispatchEvent(new Event("input"));
+          }
+        }
+      };
+    }
+
+    const btnPivotFinding = el("btn-ctx-pivot-finding");
+    if (btnPivotFinding) {
+      btnPivotFinding.onclick = () => {
+        const f = state.investigationFocus;
+        if (!f) {
+          openCreateFindingModal();
+          return;
+        }
+        openCreateFindingModal({
+          title: `Forensic Finding for ${f.title || f.name || f.id}`,
+          pid: f.pid || (f.type === "process" ? f.id : null),
+          process_name: f.name || f.title || "",
+          severity: (f.risk_level || "").toLowerCase().includes("crit") ? "Critical" : "High",
+          summary: `Identified suspicious artifact or behavior associated with ${f.type} ${f.title || f.name || f.id}.`,
+          assessment: `Pivoted from investigation workbench focus mode.`
+        });
+      };
+    }
+
+    const btnPivotBoard = el("btn-ctx-pivot-board");
+    if (btnPivotBoard) {
+      btnPivotBoard.onclick = () => {
+        const f = state.investigationFocus;
+        const entInput = el("board-note-entity");
+        const textInput = el("board-note-text");
+        if (f) {
+          if (entInput) entInput.value = `${(f.type || 'entity').toUpperCase()}: ${f.title || f.name || f.id}`;
+          if (textInput) textInput.value = `Observed entity ${f.title || f.name || f.id} during investigation.`;
+        }
+        openModal("modal-add-board-note");
+      };
+    }
+
+    const btnClearFocus = el("btn-ctx-clear-focus");
+    if (btnClearFocus) btnClearFocus.onclick = () => clearInvestigationFocus();
+
+    const btnHeaderClear = el("btn-header-clear-focus");
+    if (btnHeaderClear) btnHeaderClear.onclick = (e) => {
+      e.stopPropagation();
+      clearInvestigationFocus();
+    };
+
+    const pillFocus = el("pill-investigation-focus");
+    if (pillFocus) {
+      pillFocus.onclick = (e) => {
+        if (e.target.id === "btn-header-clear-focus") return;
+        if (state.investigationFocus?.pid || state.investigationFocus?.type === "process") {
+          openProcessFocusDrawer(state.investigationFocus.pid || state.investigationFocus.id);
+        } else {
+          showToast(`Active focus is [${state.investigationFocus?.type}]: ${state.investigationFocus?.title || state.investigationFocus?.name}`, "info");
+        }
+      };
+    }
+
+    const btnToggleDeepDive = el("btn-toggle-focus-panel");
+    if (btnToggleDeepDive) {
+      btnToggleDeepDive.onclick = () => {
+        const pid = state.investigationFocus?.pid || (state.investigationFocus?.type === "process" ? state.investigationFocus.id : null) || state.focusedPid;
+        if (pid) {
+          openProcessFocusDrawer(pid);
+        } else {
+          showToast("No active process focus. Click any process to focus and inspect.", "info");
+        }
+      };
+    }
+  }
+
+  // =========================================================================
+  // Global Forensic Search (Ctrl+K)
+  // =========================================================================
+  let searchDebounceTimer = null;
+  let activeSearchIndex = -1;
+
+  function setupGlobalSearch() {
+    const input = el("global-search-input");
+    const resultsBox = el("global-search-results");
+    if (!input || !resultsBox) return;
+
+    // Keyboard shortcut Ctrl+K / Cmd+K
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        input.focus();
+        input.select();
+      }
+      if (e.key === "Escape" && resultsBox.style.display !== "none") {
+        resultsBox.style.display = "none";
+        input.blur();
+      }
+    });
+
+    input.addEventListener("input", () => {
+      clearTimeout(searchDebounceTimer);
+      const q = input.value.trim();
+      if (!q) {
+        resultsBox.style.display = "none";
+        resultsBox.innerHTML = "";
+        activeSearchIndex = -1;
+        return;
+      }
+      searchDebounceTimer = setTimeout(() => executeGlobalSearch(q), 220);
+    });
+
+    input.addEventListener("focus", () => {
+      if (input.value.trim().length > 0 && resultsBox.children.length > 0) {
+        resultsBox.style.display = "block";
+      }
+    });
+
+    // Close on outside click
+    document.addEventListener("click", (e) => {
+      if (!input.contains(e.target) && !resultsBox.contains(e.target)) {
+        resultsBox.style.display = "none";
+      }
+    });
+
+    // Arrow navigation
+    input.addEventListener("keydown", (e) => {
+      const items = resultsBox.querySelectorAll(".search-result-item");
+      if (!items.length || resultsBox.style.display === "none") return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        activeSearchIndex = (activeSearchIndex + 1) % items.length;
+        updateSearchHighlight(items);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        activeSearchIndex = (activeSearchIndex - 1 + items.length) % items.length;
+        updateSearchHighlight(items);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (activeSearchIndex >= 0 && activeSearchIndex < items.length) {
+          items[activeSearchIndex].click();
+        }
+      }
+    });
+  }
+
+  function updateSearchHighlight(items) {
+    items.forEach((it, idx) => {
+      if (idx === activeSearchIndex) {
+        it.classList.add("keyboard-focused");
+        it.scrollIntoView({ block: "nearest" });
+      } else {
+        it.classList.remove("keyboard-focused");
+      }
+    });
+  }
+
+  async function executeGlobalSearch(query) {
+    const resultsBox = el("global-search-results");
+    if (!resultsBox) return;
+
+    try {
+      const evParam = state.activeEvidence ? `&evidence_id=${encodeURIComponent(state.activeEvidence.id)}` : "";
+      const res = await API.get(`/api/v2/search?q=${encodeURIComponent(query)}${evParam}`);
+      activeSearchIndex = -1;
+
+      const counts = res.counts || {};
+      const totalResults = Object.values(counts).reduce((a, b) => a + b, 0);
+
+      if (totalResults === 0) {
+        resultsBox.innerHTML = `
+          <div style="padding:18px 16px; text-align:center; color:var(--text-muted); font-size:12px;">
+            No forensic entities found matching "<strong>${escapeHtml(query)}</strong>"
+          </div>
+        `;
+        resultsBox.style.display = "block";
+        return;
+      }
+
+      let html = "";
+      const groups = [
+        { key: "processes", label: "Processes", icon: "⚙️" },
+        { key: "network_connections", label: "Network Sockets", icon: "🌐" },
+        { key: "artifacts", label: "Evidence Artifacts", icon: "📦" },
+        { key: "detections", label: "Detections & Rules", icon: "🛡️" },
+        { key: "findings", label: "Case Findings", icon: "📋" },
+        { key: "iocs", label: "Threat Indicators (IOCs)", icon: "🎯" },
+        { key: "timeline_events", label: "Timeline Events", icon: "⏱️" }
+      ];
+
+      groups.forEach(g => {
+        const items = (res.results && res.results[g.key]) || [];
+        if (items.length > 0) {
+          html += `<div class="search-result-group"><div class="search-group-title">${g.icon} ${g.label} (${items.length})</div>`;
+          items.forEach(it => {
+            const title = it.title || it.name || it.rule_name || it.type || `Item ${it.id}`;
+            const sub = it.subtitle || it.summary || it.description || it.path || "";
+            const risk = (it.risk_level || it.severity || "Normal").toLowerCase();
+            const badgeClass = risk.includes("crit") ? "badge-critical" : risk.includes("high") ? "badge-high" : risk.includes("susp") ? "badge-suspicious" : "badge-normal";
+            const badgeText = it.score !== undefined ? `${it.risk_level || 'Risk'} (${it.score})` : (it.severity || it.risk_level || "Normal");
+
+            html += `
+              <div class="search-result-item" 
+                   data-type="${escapeHtml(it.type || g.key)}" 
+                   data-id="${escapeHtml(String(it.id || ''))}" 
+                   data-pid="${escapeHtml(String(it.pid || ''))}"
+                   data-title="${escapeHtml(title)}"
+                   data-score="${escapeHtml(String(it.score !== undefined ? it.score : '0'))}"
+                   data-risk="${escapeHtml(it.risk_level || it.severity || 'Normal')}"
+                   data-verdict="${escapeHtml(it.verdict || 'unassigned')}"
+                   role="button" tabindex="0">
+                <div class="search-item-info">
+                  <div class="search-item-title">${escapeHtml(title)}</div>
+                  <div class="search-item-sub">${escapeHtml(sub)}</div>
+                </div>
+                <span class="badge ${badgeClass}" style="font-size:10px;">${escapeHtml(badgeText.toUpperCase())}</span>
+              </div>
+            `;
+          });
+          html += `</div>`;
+        }
+      });
+
+      resultsBox.innerHTML = html;
+      resultsBox.style.display = "block";
+
+      // Bind clicks
+      resultsBox.querySelectorAll(".search-result-item").forEach(itemEl => {
+        itemEl.onclick = () => {
+          const type = itemEl.dataset.type;
+          const id = itemEl.dataset.id;
+          const pid = itemEl.dataset.pid ? parseInt(itemEl.dataset.pid, 10) : null;
+          const title = itemEl.dataset.title;
+          const score = parseInt(itemEl.dataset.score, 10) || 0;
+          const riskLevel = itemEl.dataset.risk;
+          const verdict = itemEl.dataset.verdict;
+
+          setInvestigationFocus({
+            type: type,
+            id: id,
+            pid: pid,
+            title: title,
+            name: title,
+            risk_score: score,
+            risk_level: riskLevel,
+            verdict: verdict
+          });
+
+          resultsBox.style.display = "none";
+          el("global-search-input").value = "";
+
+          // Smart pivot based on type
+          if (type === "process" && pid) {
+            openProcessFocusDrawer(pid);
+          } else if (type === "network_connection" || type === "network") {
+            switchToPage("page-network");
+          } else if (type === "artifact") {
+            window.viewArtifact(id);
+          } else if (type === "finding") {
+            window.viewFinding(id);
+          } else if (type === "ioc") {
+            switchToPage("page-iocs");
+          } else if (type === "timeline_event" || type === "timeline") {
+            switchToPage("page-timeline");
+          }
+        };
+      });
+
+    } catch (err) {
+      console.error("Global search error:", err);
+      resultsBox.innerHTML = `<div style="padding:14px; color:var(--risk-critical); font-size:12px;">Search failed: ${escapeHtml(err.message)}</div>`;
+      resultsBox.style.display = "block";
+    }
+  }
+
+  // =========================================================================
+  // Investigation Coverage & Action Items
+  // =========================================================================
+  async function loadCoverageData() {
+    const listEl = el("cov-action-items-list");
+    if (!state.activeEvidence) {
+      if (listEl) listEl.innerHTML = `<div style="color:var(--text-muted); padding:30px; text-align:center;">Select active evidence to inspect investigation coverage.</div>`;
+      return;
+    }
+
+    try {
+      const res = await API.get(`/api/v2/investigation/coverage?evidence_id=${encodeURIComponent(state.activeEvidence.id)}`);
+      state.coverageData = res;
+
+      // Update Process Coverage
+      const p = res.process_coverage || {};
+      const totProc = p.total_processes || 0;
+      const revProc = p.reviewed_processes || 0;
+      const procPct = p.coverage_percent || 0;
+      if (el("cov-proc-reviewed")) el("cov-proc-reviewed").textContent = `${revProc} / ${totProc}`;
+      if (el("cov-proc-bar")) el("cov-proc-bar").style.width = `${Math.min(100, procPct)}%`;
+      if (el("cov-proc-pct")) el("cov-proc-pct").textContent = `${procPct}% reviewed (${p.unreviewed_processes || 0} unreviewed)`;
+
+      // Update Risk Coverage
+      const r = res.risk_coverage || {};
+      const totRisk = r.high_risk_total || 0;
+      const revRisk = r.high_risk_reviewed || 0;
+      const riskPct = totRisk > 0 ? Math.round((revRisk / totRisk) * 100) : 100;
+      if (el("cov-risk-reviewed")) el("cov-risk-reviewed").textContent = `${revRisk} / ${totRisk}`;
+      if (el("cov-risk-bar")) el("cov-risk-bar").style.width = `${riskPct}%`;
+      if (el("cov-risk-meta")) el("cov-risk-meta").textContent = `${r.high_risk_unreviewed || 0} high-risk entities await review`;
+
+      // Update Critical Threat Review
+      if (el("cov-crit-reviewed")) el("cov-crit-reviewed").textContent = r.critical_threats_count || 0;
+
+      // Evidence Verification
+      const ev = res.evidence || {};
+      if (el("cov-ev-status")) {
+        const isVer = ev.status === "verified";
+        el("cov-ev-status").textContent = isVer ? "VERIFIED" : (ev.status || "UNVERIFIED").toUpperCase();
+        el("cov-ev-status").style.color = isVer ? "var(--risk-normal)" : "var(--risk-suspicious)";
+      }
+      if (el("cov-ev-meta")) {
+        el("cov-ev-meta").textContent = ev.sha256 ? `SHA-256: ${ev.sha256.substring(0, 16)}...` : "Cryptographic hash check";
+      }
+
+      // Action items checklist
+      const items = res.action_items || [];
+      const countEl = el("cov-action-items-count");
+      if (countEl) countEl.textContent = `${items.length} Pending`;
+
+      if (listEl) {
+        if (items.length === 0) {
+          listEl.innerHTML = `
+            <div style="color:var(--risk-normal); padding:24px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;">
+              <span style="font-size:24px;">✅</span>
+              <strong>All critical forensic entities have been reviewed!</strong>
+              <span style="color:var(--text-muted); font-size:12px;">No unreviewed high-risk processes or unassigned critical threats remain.</span>
+            </div>
+          `;
+        } else {
+          listEl.innerHTML = items.map(item => {
+            const isCrit = (item.priority || "").toLowerCase().includes("crit");
+            const badgeClass = isCrit ? "badge-critical" : "badge-high";
+            return `
+              <div class="action-item-card ${isCrit ? 'critical' : ''}">
+                <div class="action-item-header">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="badge ${badgeClass}">${escapeHtml((item.priority || 'High').toUpperCase())}</span>
+                    <strong style="color:var(--text-primary); font-size:13px;">${escapeHtml(item.title)}</strong>
+                  </div>
+                  <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted);">Risk Score: ${item.score}/100</span>
+                </div>
+                <div class="action-item-body">${escapeHtml(item.reason || '')}</div>
+                <div class="action-item-actions">
+                  <button class="btn btn-sm btn-primary" onclick="window.inspectProcess(${item.id})">🔍 Investigate Focus</button>
+                  <button class="btn btn-sm" onclick="window.setQuickProcessVerdict(${item.id}, 'malicious')">Mark Malicious</button>
+                  <button class="btn btn-sm" onclick="window.setQuickProcessVerdict(${item.id}, 'benign')">Mark Benign</button>
+                </div>
+              </div>
+            `;
+          }).join("");
+        }
+      }
+
+      // Findings Breakdown
+      const bd = res.findings_breakdown || {};
+      const bdEl = el("cov-findings-breakdown");
+      if (bdEl) {
+        const statuses = [
+          { key: "draft", label: "Draft / Triaged", color: "var(--accent-blue)" },
+          { key: "under_review", label: "Under Review / Investigating", color: "var(--risk-suspicious)" },
+          { key: "confirmed", label: "Confirmed Incident Finding", color: "var(--risk-critical)" },
+          { key: "closed", label: "Closed / Resolved", color: "var(--risk-normal)" }
+        ];
+
+        bdEl.innerHTML = statuses.map(s => {
+          const val = bd[s.key] || 0;
+          return `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba(255,255,255,0.02); border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+              <span style="font-size:12px; color:var(--text-secondary); font-weight:500;">${s.label}</span>
+              <span class="badge" style="background:${s.color}22; color:${s.color}; border:1px solid ${s.color}44; font-weight:700;">${val}</span>
+            </div>
+          `;
+        }).join("");
+      }
+
+    } catch (err) {
+      console.error("Coverage load error:", err);
+      showToast(`Failed to load investigation coverage: ${err.message}`, "error");
+    }
+  }
+
+  const btnRefreshCov = el("btn-refresh-coverage");
+  if (btnRefreshCov) btnRefreshCov.onclick = () => loadCoverageData();
+
+  window.setQuickProcessVerdict = async function(pid, verdict) {
+    if (!state.activeEvidence) return;
+    try {
+      await API.post(`/api/v2/processes/${pid}/verdict`, {
+        verdict: verdict,
+        evidence_id: state.activeEvidence.id
+      });
+      showToast(`PID ${pid} marked as "${verdict}"`, "success");
+      await loadCoverageData();
+    } catch (err) {
+      showToast(`Failed to set verdict: ${err.message}`, "error");
+    }
+  };
+
+  // =========================================================================
+  // Investigation Evidence Board
+  // =========================================================================
+  async function loadBoardData() {
+    const container = el("evidence-board-container");
+    if (!container) return;
+
+    try {
+      const cParam = state.activeCase ? `case_id=${encodeURIComponent(state.activeCase.id)}` : "";
+      const eParam = state.activeEvidence ? `&evidence_id=${encodeURIComponent(state.activeEvidence.id)}` : "";
+      const query = cParam ? `?${cParam}${eParam}` : (eParam ? `?${eParam.substring(1)}` : "");
+      
+      const res = await API.get(`/api/v2/board${query}`);
+      state.boardItems = res.board_items || [];
+
+      if (state.boardItems.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1; color:var(--text-muted); text-align:center; padding:48px; border:1px dashed var(--border-light); border-radius:8px;">
+            <div style="font-size:32px; margin-bottom:12px;">📌</div>
+            <strong style="color:var(--text-primary); font-size:14px; display:block; margin-bottom:6px;">No entities or notes pinned yet</strong>
+            <p style="font-size:12px; max-width:400px; margin:0 auto 16px auto;">
+              Pin key processes, network sockets, memory anomalies, and analyst hypotheses here to build a structured case narrative.
+            </p>
+            <button class="btn btn-primary" onclick="window.openAddBoardNoteModal()">➕ Add Investigation Note</button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = state.boardItems.map(item => {
+        const entType = (item.entity_type || 'note').toUpperCase();
+        const typeBadge = entType.includes("PROC") ? "badge-normal" : entType.includes("NET") ? "badge-purple" : entType.includes("MEM") ? "badge-critical" : "badge-suspicious";
+        return `
+          <div class="board-card" data-id="${item.id}">
+            <div class="board-card-header">
+              <span class="badge ${typeBadge}" style="font-size:10px;">${escapeHtml(entType)}</span>
+              <span class="board-card-time">${escapeHtml(item.created_at || '')}</span>
+              <button class="board-card-del" onclick="window.deleteBoardItem(${item.id})" title="Remove from board">&times;</button>
+            </div>
+            <div class="board-card-title">${escapeHtml(item.title || 'Investigation Observation')}</div>
+            <div class="board-card-body">${escapeHtml(item.notes || '')}</div>
+            <div class="board-card-footer">
+              <span style="font-size:11px; font-family:var(--font-mono); color:var(--text-muted);">${item.entity_id ? escapeHtml(String(item.entity_id)) : ''}</span>
+              <button class="btn btn-sm" onclick="window.inspectBoardItem(${item.id})" style="font-size:11px; padding:2px 8px;">Inspect</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+    } catch (err) {
+      console.error("Board load error:", err);
+      container.innerHTML = `<div style="grid-column: 1 / -1; color:var(--risk-critical); text-align:center; padding:30px;">Failed to load Evidence Board: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  function setupEvidenceBoardEvents() {
+    const btnAdd = el("btn-board-add-note");
+    if (btnAdd) btnAdd.onclick = () => window.openAddBoardNoteModal();
+
+    const btnRef = el("btn-refresh-board");
+    if (btnRef) btnRef.onclick = () => loadBoardData();
+
+    const btnSub = el("btn-submit-board-note");
+    if (btnSub) {
+      btnSub.onclick = async () => {
+        const noteEl = el("board-note-text");
+        const entityEl = el("board-note-entity");
+        const text = noteEl ? noteEl.value.trim() : "";
+        const entity = entityEl ? entityEl.value.trim() : "";
+
+        if (!text) {
+          showToast("Please enter an observation or note", "warning");
+          return;
+        }
+
+        try {
+          await API.post("/api/v2/board", {
+            case_id: state.activeCase ? state.activeCase.id : null,
+            evidence_id: state.activeEvidence ? state.activeEvidence.id : null,
+            entity_type: entity ? "entity" : "note",
+            entity_id: entity || null,
+            title: entity ? `Note: ${entity}` : "Analyst Hypothesis",
+            notes: text,
+            color: "yellow"
+          });
+
+          closeModal("modal-add-board-note");
+          if (noteEl) noteEl.value = "";
+          if (entityEl) entityEl.value = "";
+          showToast("Note pinned to Evidence Board", "success");
+          await loadBoardData();
+        } catch (err) {
+          showToast(`Failed to pin note: ${err.message}`, "error");
+        }
+      };
+    }
+  }
+
+  window.openAddBoardNoteModal = function() {
+    openModal("modal-add-board-note");
+    const textEl = el("board-note-text");
+    if (textEl) textEl.focus();
+  };
+
+  window.deleteBoardItem = async function(id) {
+    const ok = await customConfirm({
+      title: "Remove Pinned Item",
+      message: "Are you sure you want to remove this item from the Evidence Board?",
+      confirmText: "Remove",
+      cancelText: "Keep",
+      isDanger: false
+    });
+    if (!ok) return;
+
+    try {
+      await API.delete(`/api/v2/board/${id}`);
+      showToast("Item unpinned from Evidence Board", "info");
+      await loadBoardData();
+    } catch (err) {
+      showToast(`Delete failed: ${err.message}`, "error");
+    }
+  };
+
+  window.inspectBoardItem = function(id) {
+    const item = state.boardItems.find(b => b.id === id);
+    if (!item) return;
+    if (item.entity_type === "process" && item.entity_id) {
+      const pid = parseInt(item.entity_id.replace(/\D/g, ""), 10);
+      if (!isNaN(pid)) {
+        openProcessFocusDrawer(pid);
+        return;
+      }
+    }
+    setInvestigationFocus({
+      type: item.entity_type || "note",
+      id: item.entity_id || item.id,
+      title: item.title,
+      name: item.title
+    });
+  };
+
+  // =========================================================================
+  // Forensic Artifact Explorer
+  // =========================================================================
+  async function loadArtifactsData() {
+    const tbody = el("artifacts-table-tbody");
+    if (!tbody) return;
+
+    if (!state.activeEvidence) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Select active evidence to view forensic artifacts.</td></tr>`;
+      return;
+    }
+
+    try {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Querying first-class forensic artifacts...</td></tr>`;
+      const res = await API.get(`/api/v2/artifacts?evidence_id=${encodeURIComponent(state.activeEvidence.id)}`);
+      state.artifacts = res.artifacts || [];
+      renderArtifactRows();
+    } catch (err) {
+      console.error("Artifacts load error:", err);
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--risk-critical);">Failed to load artifacts: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  function renderArtifactRows() {
+    const tbody = el("artifacts-table-tbody");
+    if (!tbody) return;
+
+    const search = (el("art-search-input") ? el("art-search-input").value : "").toLowerCase().trim();
+    const typeFilter = el("art-type-filter") ? el("art-type-filter").value : "ALL";
+
+    const filtered = (state.artifacts || []).filter(a => {
+      const matchType = typeFilter === "ALL" || (a.type || "").toLowerCase() === typeFilter.toLowerCase();
+      const matchSearch = !search ||
+        (a.id || "").toLowerCase().includes(search) ||
+        (a.plugin || "").toLowerCase().includes(search) ||
+        (a.entity_id || "").toLowerCase().includes(search) ||
+        (a.sha256 || "").toLowerCase().includes(search);
+      return matchType && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">No artifacts match the current filter.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(a => {
+      const type = (a.type || 'unknown').toLowerCase();
+      const typeBadge = type.includes("net") ? "badge-purple" : type.includes("mem") ? "badge-critical" : type.includes("proc") ? "badge-normal" : "badge-suspicious";
+      const hash = a.sha256 ? `${a.sha256.substring(0, 16)}...` : "-";
+
+      return `
+        <tr>
+          <td style="font-family:var(--font-mono); font-size:12px; color:var(--accent-cyan); font-weight:600;">${escapeHtml(a.id || '')}</td>
+          <td><span class="badge ${typeBadge}">${escapeHtml(a.type || 'Artifact')}</span></td>
+          <td style="font-family:var(--font-mono); font-size:12px; color:var(--text-primary);">${escapeHtml(a.plugin || 'vol3')}</td>
+          <td style="font-weight:600; color:var(--text-primary);">${escapeHtml(a.entity_id || '-')}</td>
+          <td style="font-size:11px; color:var(--text-muted);">${escapeHtml(a.created_at || a.timestamp || '')}</td>
+          <td style="font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(a.raw_ref || '')}">${escapeHtml(a.raw_ref || '-')}</td>
+          <td style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted);" title="${escapeHtml(a.sha256 || '')}">${escapeHtml(hash)}</td>
+          <td>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-sm" onclick="window.viewArtifact('${escapeHtml(a.id)}')">Inspect</button>
+              <button class="btn btn-sm" onclick="window.setFocusFromArtifact('${escapeHtml(a.id)}')">Focus</button>
+              ${a.type === 'network_connection' ? `<button class="btn btn-sm" onclick="window.promoteArtifactToIOC('${escapeHtml(a.id)}')">IOC</button>` : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function setupArtifactExplorerEvents() {
+    const searchInput = el("art-search-input");
+    if (searchInput) searchInput.oninput = () => renderArtifactRows();
+
+    const typeFilter = el("art-type-filter");
+    if (typeFilter) typeFilter.onchange = () => renderArtifactRows();
+
+    const refreshBtn = el("btn-refresh-artifacts");
+    if (refreshBtn) refreshBtn.onclick = () => loadArtifactsData();
+  }
+
+  window.setFocusFromArtifact = function(artId) {
+    const a = (state.artifacts || []).find(x => x.id === artId);
+    if (!a) return;
+    setInvestigationFocus({
+      type: "artifact",
+      id: a.id,
+      title: `${(a.type || 'Artifact').toUpperCase()}: ${a.entity_id || a.id}`,
+      name: a.id
+    });
+  };
+
+  // =========================================================================
+  // Memory Anomalies Workspace
+  // =========================================================================
+  async function loadMemoryData() {
+    const tbody = el("memory-table-tbody");
+    if (!tbody) return;
+
+    if (!state.activeEvidence) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Select active evidence to inspect memory anomalies.</td></tr>`;
+      return;
+    }
+
+    try {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Analyzing Virtual Address Descriptors and executable sections...</td></tr>`;
+      const res = await API.get(`/api/v2/memory?evidence_id=${encodeURIComponent(state.activeEvidence.id)}`);
+      state.memoryRegions = res.regions || [];
+
+      // Update counters
+      if (el("mem-total-count")) el("mem-total-count").textContent = res.total || state.memoryRegions.length;
+      if (el("mem-rwx-count")) el("mem-rwx-count").textContent = res.rwx_count || 0;
+      if (el("mem-suspicious-count")) el("mem-suspicious-count").textContent = res.suspicious_count || 0;
+      if (el("mem-procs-count")) el("mem-procs-count").textContent = res.unique_pids || 0;
+
+      renderMemoryRows();
+    } catch (err) {
+      console.error("Memory data load error:", err);
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--risk-critical);">Failed to load memory anomalies: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  function renderMemoryRows() {
+    const tbody = el("memory-table-tbody");
+    if (!tbody) return;
+
+    const search = (el("mem-search-input") ? el("mem-search-input").value : "").toLowerCase().trim();
+    const rwxOnly = el("mem-filter-rwx") ? el("mem-filter-rwx").checked : false;
+    const suspOnly = el("mem-filter-suspicious") ? el("mem-filter-suspicious").checked : false;
+
+    const filtered = (state.memoryRegions || []).filter(m => {
+      const matchSearch = !search || String(m.pid).includes(search) || (m.start_addr || '').toLowerCase().includes(search) || (m.end_addr || '').toLowerCase().includes(search);
+      const isRwx = (m.protection || '').toUpperCase().includes("PAGE_EXECUTE_READWRITE") || (m.protection || '').toUpperCase().includes("RWX");
+      const isSusp = m.is_suspicious || (m.tag || '').toLowerCase().includes("vad") || isRwx;
+      
+      if (rwxOnly && !isRwx) return false;
+      if (suspOnly && !isSusp) return false;
+      return matchSearch;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">No memory sections match the active filter criteria.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(m => {
+      const isRwx = (m.protection || '').toUpperCase().includes("PAGE_EXECUTE_READWRITE") || (m.protection || '').toUpperCase().includes("RWX");
+      const isSusp = m.is_suspicious || isRwx;
+
+      return `
+        <tr>
+          <td>
+            <a href="javascript:void(0)" onclick="window.inspectProcess(${m.pid})" style="font-weight:700; color:var(--accent-blue); text-decoration:none; font-family:var(--font-mono);">PID ${m.pid}</a>
+          </td>
+          <td style="font-family:var(--font-mono); font-size:12px; color:var(--text-primary);">${escapeHtml(m.start_addr || '0x0')} &ndash; ${escapeHtml(m.end_addr || '')}</td>
+          <td>
+            <span class="badge ${isRwx ? 'badge-rwx' : 'badge-normal'}">${escapeHtml(m.protection || 'PAGE_READWRITE')}</span>
+          </td>
+          <td style="font-family:var(--font-mono); font-size:12px; color:var(--text-secondary);">${escapeHtml(m.tag || 'Vad')}</td>
+          <td>
+            ${isSusp ? '<span class="badge badge-critical">⚠️ Suspicious</span>' : '<span class="badge badge-normal">Normal</span>'}
+          </td>
+          <td style="max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--font-mono); font-size:11px; color:var(--text-muted);">
+            ${escapeHtml(m.disasm || m.hex_dump || m.details || 'VAD allocation without disk-backing')}
+          </td>
+          <td>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-sm btn-primary" onclick="window.inspectProcess(${m.pid})">Deep Dive</button>
+              <button class="btn btn-sm" onclick="window.setFocusFromMemory(${m.pid}, '${escapeHtml(m.start_addr || '')}')">Focus</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function setupMemoryAnomaliesEvents() {
+    const searchInput = el("mem-search-input");
+    if (searchInput) searchInput.oninput = () => renderMemoryRows();
+
+    const rwxCheck = el("mem-filter-rwx");
+    if (rwxCheck) rwxCheck.onchange = () => renderMemoryRows();
+
+    const suspCheck = el("mem-filter-suspicious");
+    if (suspCheck) suspCheck.onchange = () => renderMemoryRows();
+
+    const refreshBtn = el("btn-refresh-memory");
+    if (refreshBtn) refreshBtn.onclick = () => loadMemoryData();
+  }
+
+  window.setFocusFromMemory = function(pid, addr) {
+    setInvestigationFocus({
+      type: "memory",
+      id: `${pid}:${addr}`,
+      pid: pid,
+      title: `Mem Anomaly (PID ${pid} @ ${addr})`,
+      name: `PID ${pid}`
+    });
+  };
+
+  // =========================================================================
+  // Accessible Graph Relational Table
+  // =========================================================================
+  function renderAccessibleGraphTable() {
+    const nodesTbody = el("graph-nodes-table-tbody");
+    const edgesTbody = el("graph-edges-table-tbody");
+    if (!nodesTbody || !edgesTbody) return;
+
+    const nodes = state.graph.nodes || [];
+    const edges = state.graph.edges || [];
+
+    if (nodes.length === 0) {
+      nodesTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No graph nodes generated. Run triage to populate graph.</td></tr>`;
+    } else {
+      nodesTbody.innerHTML = nodes.map(n => {
+        const type = n.type || "node";
+        const risk = (n.risk || "normal").toLowerCase();
+        const badgeClass = risk.includes("crit") ? "badge-critical" : risk.includes("high") ? "badge-high" : risk.includes("susp") ? "badge-suspicious" : "badge-normal";
+        const typeBadge = type === "process" ? "badge-normal" : type === "ip" ? "badge-purple" : type === "mem" ? "badge-critical" : "badge-suspicious";
+        const pidOrId = n.pid || n.id || "-";
+        return `
+          <tr>
+            <td><span class="badge ${typeBadge}">${escapeHtml(type.toUpperCase())}</span></td>
+            <td style="font-weight:600; color:var(--text-primary);">${escapeHtml(n.label || n.id || '')}</td>
+            <td style="font-family:var(--font-mono); font-size:12px;">${escapeHtml(String(pidOrId))}</td>
+            <td style="font-weight:700; color:var(--text-primary);">${n.score !== undefined ? n.score : (n.risk_score || '-')}</td>
+            <td><span class="badge ${badgeClass}">${escapeHtml((n.risk || 'Normal').toUpperCase())}</span></td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-sm" onclick="window.setFocusAndInspect('${escapeHtml(type)}', '${escapeHtml(String(pidOrId))}', '${escapeHtml(n.label || '')}')">Inspect</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    if (edges.length === 0) {
+      edgesTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No relational edges available.</td></tr>`;
+    } else {
+      edgesTbody.innerHTML = edges.map(e => {
+        const src = typeof e.source === 'object' ? (e.source.label || e.source.id) : e.source;
+        const tgt = typeof e.target === 'object' ? (e.target.label || e.target.id) : e.target;
+        return `
+          <tr>
+            <td style="font-weight:600; color:var(--accent-cyan); font-family:var(--font-mono); font-size:12px;">${escapeHtml(String(src))}</td>
+            <td><span class="badge badge-suspicious" style="font-size:11px;">${escapeHtml(e.label || e.relation || 'LINKED_TO')}</span></td>
+            <td style="font-weight:600; color:var(--accent-blue); font-family:var(--font-mono); font-size:12px;">${escapeHtml(String(tgt))}</td>
+            <td style="color:var(--text-muted); font-size:11px;">${escapeHtml(e.provenance || 'Volatility 3 Heuristic')}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+  }
+
+  window.setFocusAndInspect = function(type, id, name) {
+    if (type === "process" && id && id !== "-") {
+      const pid = parseInt(id, 10);
+      if (!isNaN(pid)) {
+        openProcessFocusDrawer(pid);
+        return;
+      }
+    }
+    setInvestigationFocus({
+      type: type || "entity",
+      id: id,
+      title: name || `${type}: ${id}`,
+      name: name || id
+    });
+  };
+
+  window.setInvestigationFocus = setInvestigationFocus;
+  window.clearInvestigationFocus = clearInvestigationFocus;
 
   // Global bootstrap on ready
   if (document.readyState === "loading") {

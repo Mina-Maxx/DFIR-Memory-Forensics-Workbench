@@ -8,6 +8,9 @@ from backend.api.timeline import timeline_bp
 from backend.api.graph import graph_bp
 from backend.api.iocs import iocs_bp
 from backend.api.reports import reports_bp
+from backend.api.search import search_bp
+from backend.api.coverage import coverage_bp
+from backend.api.notes import notes_bp
 
 __all__ = [
     "cases_bp",
@@ -19,5 +22,8 @@ __all__ = [
     "timeline_bp",
     "graph_bp",
     "iocs_bp",
-    "reports_bp"
+    "reports_bp",
+    "search_bp",
+    "coverage_bp",
+    "notes_bp"
 ]

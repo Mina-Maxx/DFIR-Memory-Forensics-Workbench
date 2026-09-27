@@ -1202,6 +1202,346 @@ g.graph-node text.graph-node-sub {
 .badge-status-inconclusive { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
 .badge-status-closed { background: rgba(100, 116, 139, 0.15); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.3); }
 
+/* High-Contrast Accessible Focus */
+:focus-visible {
+  outline: 2px solid var(--accent-cyan) !important;
+  outline-offset: 2px !important;
+}
+
+/* Header Global Search */
+.header-search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 420px;
+  margin: 0 16px;
+}
+.header-search-input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 6px 12px 6px 34px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.header-search-input:focus {
+  border-color: var(--accent-cyan);
+  background: var(--bg-hover);
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+}
+.header-search-wrap .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.search-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+  max-height: 480px;
+  overflow-y: auto;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+}
+.search-group-header {
+  padding: 8px 12px;
+  background: var(--bg-surface);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
+}
+.search-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(42, 55, 74, 0.4);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 12.5px;
+}
+.search-item-row:hover, .search-item-row:focus {
+  background: var(--bg-hover);
+}
+.search-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+.search-item-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-item-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  direction: ltr;
+  text-align: left;
+}
+
+/* Persistent Investigation Context Bar */
+.investigation-context-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 20px;
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.12) 0%, rgba(30, 41, 59, 0.95) 100%);
+  border-bottom: 1px solid rgba(6, 182, 212, 0.4);
+  flex-shrink: 0;
+  z-index: 45;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  animation: barSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes barSlideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ctx-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.ctx-bar-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  letter-spacing: 0.5px;
+}
+.ctx-bar-entity {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  direction: ltr;
+}
+.ctx-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.btn-ctx-pivot {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-ctx-pivot:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--accent-cyan);
+}
+.btn-ctx-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+  border-radius: 4px;
+}
+.btn-ctx-close:hover {
+  color: var(--risk-critical);
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* Coverage View Styles */
+.coverage-progress-wrap {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+  border: 1px solid var(--border-color);
+}
+.coverage-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-cyan) 100%);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.action-item-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--risk-high);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  transition: all 0.15s;
+}
+.action-item-card:hover {
+  border-color: var(--accent-cyan);
+  background: var(--bg-hover);
+}
+
+/* Evidence Board Grid */
+.evidence-board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 10px 0;
+}
+.board-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+}
+.board-card:hover {
+  border-color: var(--accent-blue);
+  transform: translateY(-2px);
+}
+.board-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.board-card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  direction: ltr;
+  word-break: break-all;
+}
+.board-card-body {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.board-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid rgba(42, 55, 74, 0.4);
+}
+
+/* Accessible Graph Tabs & Table */
+.graph-subtab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.btn-graph-tab {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-graph-tab.active {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+/* RWX and Memory Anomalies Badges */
+.badge-rwx {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+.badge-inferred {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  font-size: 10.5px;
+}
+.badge-observed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  font-size: 10.5px;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 1024px) {
+  aside.app-sidebar {
+    width: 200px;
+  }
+  .header-search-wrap {
+    max-width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-wrapper {
+    flex-direction: column;
+  }
+  aside.app-sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .app-header {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px;
+    gap: 8px;
+  }
+  .process-drawer {
+    width: 100% !important;
+  }
+  .investigation-context-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
 </style>
 </head>
 <body style="background-color: #0b0f19; color-scheme: dark;">
@@ -1212,7 +1552,14 @@ g.graph-node text.graph-node-sub {
       <div class="brand-area">
         <span class="brand-logo">🛡️</span>
         <div class="brand-title">Volatility 3 <span>DFIR Suite</span></div>
-        <span class="brand-badge">WEB V2.0</span>
+        <span class="brand-badge">V2 WORKBENCH</span>
+      </div>
+
+      <!-- Global Search Container -->
+      <div class="header-search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="global-search-input" class="header-search-input" placeholder="Global forensic search... (Ctrl+K)" aria-label="Global forensic investigation search" autocomplete="off">
+        <div id="global-search-results" class="search-dropdown-menu" style="display:none;" role="region" aria-label="Search Results"></div>
       </div>
 
       <div class="context-bar">
@@ -1224,42 +1571,82 @@ g.graph-node text.graph-node-sub {
           <span class="pill-label">Evidence:</span>
           <span class="pill-val" id="header-evidence-name">No evidence</span>
         </div>
+        <div class="context-pill focus-pill" id="pill-investigation-focus" title="Active Investigation Focus (Click to inspect)" style="display:none;">
+          <span class="pill-label">Focus:</span>
+          <span class="pill-val" id="header-focus-val">None</span>
+          <button id="btn-header-clear-focus" class="btn-ctx-close" title="Clear focus" style="margin-left:4px;">&times;</button>
+        </div>
       </div>
 
       <div class="header-actions">
+        <button class="btn" id="btn-toggle-focus-panel" title="Toggle Investigation Focus Deep-Dive Panel">🔬 Focus Deep-Dive</button>
         <button class="btn btn-primary" id="btn-quick-triage">⚡ Run Automated Triage</button>
         <button class="btn" id="btn-quick-import">➕ Import Dump</button>
       </div>
     </header>
+
+    <!-- Persistent Investigation Context Bar -->
+    <div id="investigation-context-bar" class="investigation-context-bar" style="display: none;">
+      <div class="ctx-bar-left">
+        <span class="ctx-bar-label">TARGET FOCUS:</span>
+        <span class="ctx-bar-entity" id="ctx-bar-entity-title">PID 0</span>
+        <span class="badge badge-normal" id="ctx-bar-risk-badge">Normal</span>
+        <span class="badge" id="ctx-bar-verdict-badge" style="background:rgba(148,163,184,0.15); color:#94a3b8; border:1px solid rgba(148,163,184,0.3);">Verdict: Unreviewed</span>
+      </div>
+      <div class="ctx-bar-actions">
+        <button class="btn-ctx-pivot" id="btn-ctx-open-focus">🔬 Deep Dive</button>
+        <button class="btn-ctx-pivot" id="btn-ctx-pivot-process">🌳 Process Tree</button>
+        <button class="btn-ctx-pivot" id="btn-ctx-pivot-memory">💾 Memory</button>
+        <button class="btn-ctx-pivot" id="btn-ctx-pivot-network">🌐 Network</button>
+        <button class="btn-ctx-pivot" id="btn-ctx-pivot-timeline">🕐 Timeline</button>
+        <button class="btn-ctx-pivot" id="btn-ctx-pivot-graph">🕸️ Graph</button>
+        <button class="btn-ctx-pivot" id="btn-ctx-pivot-finding">🛡️ Finding</button>
+        <button class="btn-ctx-pivot" id="btn-ctx-pivot-board">📌 Pin</button>
+        <button class="btn-ctx-close" id="btn-ctx-clear-focus" title="Clear focus">&times;</button>
+      </div>
+    </div>
 
     <!-- Main Workspace Container -->
     <div class="main-wrapper">
       
       <!-- Modern Sidebar Navigation -->
       <aside class="app-sidebar">
-        <div class="nav-group-title">Investigation</div>
+        <div class="nav-group-title">Investigation (Core Workflow)</div>
         <ul class="nav-links">
           <li class="nav-item active" data-page="page-dashboard">
-            <span class="nav-icon">📊</span> Dashboard
+            <span class="nav-icon">📊</span> Overview &amp; Metrics
           </li>
-          <li class="nav-item" data-page="page-cases">
-            <span class="nav-icon">🗂️</span> Cases & Evidence
+          <li class="nav-item" data-page="page-coverage">
+            <span class="nav-icon">🎯</span> Investigation Coverage
+          </li>
+          <li class="nav-item" data-page="page-board">
+            <span class="nav-icon">📌</span> Evidence Board
+          </li>
+          <li class="nav-item" data-page="page-artifacts">
+            <span class="nav-icon">📜</span> Artifact Explorer
           </li>
           <li class="nav-item" data-page="page-findings">
             <span class="nav-icon">🛡️</span> Findings &amp; Verdicts
           </li>
+        </ul>
+
+        <div class="nav-group-title">Evidence &amp; Acquisition</div>
+        <ul class="nav-links">
+          <li class="nav-item" data-page="page-cases">
+            <span class="nav-icon">🗂️</span> Cases &amp; Integrity
+          </li>
           <li class="nav-item" data-page="page-upload">
-            <span class="nav-icon">📁</span> File Ingestion & Upload
+            <span class="nav-icon">📁</span> File Ingestion &amp; Upload
           </li>
         </ul>
 
-        <div class="nav-group-title">Forensic Analysis</div>
+        <div class="nav-group-title">Deep Forensic Analysis</div>
         <ul class="nav-links">
           <li class="nav-item" data-page="page-processes">
-            <span class="nav-icon">🌳</span> Process Tree
+            <span class="nav-icon">🌳</span> Process Tree &amp; DKOM
           </li>
-          <li class="nav-item" data-page="page-graph">
-            <span class="nav-icon">🕸️</span> Forensic Graph
+          <li class="nav-item" data-page="page-memory">
+            <span class="nav-icon">💾</span> Memory &amp; Injections
           </li>
           <li class="nav-item" data-page="page-network">
             <span class="nav-icon">🌐</span> Network Sockets
@@ -1267,24 +1654,27 @@ g.graph-node text.graph-node-sub {
           <li class="nav-item" data-page="page-timeline">
             <span class="nav-icon">🕐</span> Event Timeline
           </li>
-          <li class="nav-item" data-page="page-plugins">
-            <span class="nav-icon">⚙️</span> Plugins Explorer
-          </li>
-        </ul>
-
-        <div class="nav-group-title">Automation & Threat Intel</div>
-        <ul class="nav-links">
-          <li class="nav-item" data-page="page-iocs">
-            <span class="nav-icon">🎯</span> IOCs & Hunter
+          <li class="nav-item" data-page="page-graph">
+            <span class="nav-icon">🕸️</span> Forensic Graph
           </li>
           <li class="nav-item" data-page="page-yara">
             <span class="nav-icon">🧪</span> YARA Memory Scanner
+          </li>
+        </ul>
+
+        <div class="nav-group-title">Automation &amp; Operations</div>
+        <ul class="nav-links">
+          <li class="nav-item" data-page="page-iocs">
+            <span class="nav-icon">🎯</span> IOCs &amp; Hunter
           </li>
           <li class="nav-item" data-page="page-playbooks">
             <span class="nav-icon">▶️</span> Playbooks
           </li>
           <li class="nav-item" data-page="page-diff">
             <span class="nav-icon">⇄</span> Snapshot Diff
+          </li>
+          <li class="nav-item" data-page="page-plugins">
+            <span class="nav-icon">⚙️</span> Plugins Explorer
           </li>
           <li class="nav-item" data-page="page-report">
             <span class="nav-icon">📑</span> Forensic Report
@@ -1429,6 +1819,129 @@ g.graph-node text.graph-node-sub {
           </div>
         </section>
 
+        <!-- INVESTIGATION COVERAGE VIEW -->
+        <section class="page-view" id="page-coverage">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Investigation Coverage &amp; Action Items</h2>
+              <div class="page-subtitle">Trace progress across evidence, detect unreviewed high-risk threats, and prioritize analyst actions</div>
+            </div>
+            <button class="btn btn-sm" id="btn-refresh-coverage">🔄 Refresh Coverage</button>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span class="metric-label">Process Review Coverage</span>
+              <span class="metric-value" id="cov-proc-reviewed">0 / 0</span>
+              <div class="coverage-progress-wrap"><div class="coverage-progress-fill" id="cov-proc-bar" style="width:0%;"></div></div>
+              <span class="metric-meta" id="cov-proc-pct">0% reviewed</span>
+            </div>
+            <div class="metric-card warning">
+              <span class="metric-label">High-Risk Coverage</span>
+              <span class="metric-value" id="cov-risk-reviewed" style="color:var(--risk-high)">0 / 0</span>
+              <div class="coverage-progress-wrap"><div class="coverage-progress-fill" id="cov-risk-bar" style="width:0%; background:var(--risk-high);"></div></div>
+              <span class="metric-meta" id="cov-risk-meta">Entities with score &ge; 40</span>
+            </div>
+            <div class="metric-card critical">
+              <span class="metric-label">Critical Threat Review</span>
+              <span class="metric-value" id="cov-crit-reviewed" style="color:var(--risk-critical)">0</span>
+              <span class="metric-meta">Hidden or RWX injected</span>
+            </div>
+            <div class="metric-card success">
+              <span class="metric-label">Evidence Verification</span>
+              <span class="metric-value" id="cov-ev-status" style="font-size:16px;">Unverified</span>
+              <span class="metric-meta" id="cov-ev-meta">Cryptographic hash check</span>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">⚡ Unresolved Forensic Action Items</span>
+                <span class="badge badge-high" id="cov-action-items-count">0 Pending</span>
+              </div>
+              <div class="panel-body">
+                <div id="cov-action-items-list" style="display:flex; flex-direction:column; gap:8px;">
+                  <div style="color:var(--text-muted); padding:20px; text-align:center;">All critical forensic entities have been reviewed.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">🛡️ Findings Status Breakdown</span>
+              </div>
+              <div class="panel-body">
+                <div id="cov-findings-breakdown" style="display:flex; flex-direction:column; gap:10px;">
+                  <div style="color:var(--text-muted); font-size:12px;">Loading finding lifecycle distribution...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- EVIDENCE BOARD VIEW -->
+        <section class="page-view" id="page-board">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Investigation Evidence Board</h2>
+              <div class="page-subtitle">Pinned entities, forensic observations, and structured case narrative</div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-sm btn-primary" id="btn-board-add-note">➕ Add Sticky Note</button>
+              <button class="btn btn-sm" id="btn-refresh-board">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <div id="evidence-board-container" class="evidence-board-grid">
+            <div style="grid-column: 1 / -1; color:var(--text-muted); text-align:center; padding:40px;">
+              No entities or notes pinned to the Evidence Board yet. Click "Pin" on any process, socket, memory anomaly, or finding to pin it here.
+            </div>
+          </div>
+        </section>
+
+        <!-- ARTIFACT EXPLORER VIEW -->
+        <section class="page-view" id="page-artifacts">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Forensic Artifact Explorer</h2>
+              <div class="page-subtitle">First-class evidence artifacts with plugin execution provenance and cryptographic hashes</div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <input type="text" class="search-input" id="art-search-input" placeholder="🔍 Search artifact ID, entity, plugin..." style="width:240px;">
+              <select class="select-input" id="art-type-filter" style="font-size:12px; padding:4px 8px;">
+                <option value="ALL">All Types</option>
+                <option value="network_connection">Network Sockets</option>
+                <option value="memory_dump">Memory Dumps</option>
+                <option value="process">Processes</option>
+                <option value="detection">Detections</option>
+                <option value="dll">DLLs</option>
+              </select>
+              <button class="btn btn-sm" id="btn-refresh-artifacts">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <div class="table-container" style="max-height: calc(100vh - 200px); overflow-y: auto;">
+            <table class="forensic-table" aria-label="First-class Forensic Artifacts">
+              <thead>
+                <tr>
+                  <th>Artifact ID</th>
+                  <th>Type</th>
+                  <th>Source Plugin</th>
+                  <th>Entity / PID</th>
+                  <th>Provenance / Timestamp</th>
+                  <th>Raw Reference</th>
+                  <th>Cryptographic Hash</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="artifacts-table-tbody">
+                <tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Loading artifacts...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <!-- 2. PROCESS TREE VIEW -->
         <section class="page-view" id="page-processes">
           <div class="page-header">
@@ -1458,6 +1971,68 @@ g.graph-node text.graph-node-sub {
           </div>
         </section>
 
+        <!-- MEMORY & INJECTIONS VIEW -->
+        <section class="page-view" id="page-memory">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Memory Anomalies &amp; Injection Workspace</h2>
+              <div class="page-subtitle">Inspect Virtual Address Descriptors (VAD), executable/writable pages (RWX), and Malfind anomalies</div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <input type="text" class="search-input" id="mem-search-input" placeholder="🔍 Filter PID or Address..." style="width:200px;">
+              <label style="font-size:12px; display:flex; align-items:center; gap:4px; cursor:pointer; color:var(--risk-critical); font-weight:600;">
+                <input type="checkbox" id="mem-filter-rwx" checked> RWX Only
+              </label>
+              <label style="font-size:12px; display:flex; align-items:center; gap:4px; cursor:pointer; color:var(--risk-suspicious); font-weight:600;">
+                <input type="checkbox" id="mem-filter-suspicious"> Suspicious Only
+              </label>
+              <button class="btn btn-sm" id="btn-refresh-memory">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span class="metric-label">Total Memory Regions</span>
+              <span class="metric-value" id="mem-total-count">0</span>
+              <span class="metric-meta">Enumerated memory sections</span>
+            </div>
+            <div class="metric-card critical">
+              <span class="metric-label">Confirmed RWX Regions</span>
+              <span class="metric-value" id="mem-rwx-count" style="color:var(--risk-critical)">0</span>
+              <span class="metric-meta">PAGE_EXECUTE_READWRITE</span>
+            </div>
+            <div class="metric-card warning">
+              <span class="metric-label">Suspicious Tags</span>
+              <span class="metric-value" id="mem-suspicious-count" style="color:var(--risk-suspicious)">0</span>
+              <span class="metric-meta">Heuristic anomalies flagged</span>
+            </div>
+            <div class="metric-card success">
+              <span class="metric-label">Processes with Anomalies</span>
+              <span class="metric-value" id="mem-procs-count">0</span>
+              <span class="metric-meta">Unique PIDs affected</span>
+            </div>
+          </div>
+
+          <div class="table-container" style="max-height: calc(100vh - 280px); overflow-y: auto;">
+            <table class="forensic-table" aria-label="Memory Anomalies and VAD Regions">
+              <thead>
+                <tr>
+                  <th>PID</th>
+                  <th>Start Address</th>
+                  <th>Protection</th>
+                  <th>Tag / Type</th>
+                  <th>Suspicious?</th>
+                  <th>Details / Disassembly Reference</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="memory-table-tbody">
+                <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Loading memory regions...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <!-- 3. FORENSIC GRAPH VIEW -->
         <section class="page-view" id="page-graph">
           <div class="page-header">
@@ -1465,7 +2040,14 @@ g.graph-node text.graph-node-sub {
               <h2 class="page-title">Interactive Relationship Graph</h2>
               <div class="page-subtitle">Multi-dimensional force-directed forensic graph: Process trees, sockets, injected memory, and YARA rules</div>
             </div>
-            <button class="btn btn-sm" id="btn-graph-rebuild">🔄 Rebuild Graph</button>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-sm" id="btn-graph-rebuild">🔄 Rebuild Graph</button>
+            </div>
+          </div>
+
+          <div class="graph-subtab-bar" style="margin-bottom: 12px; display:flex; gap:8px;">
+            <button class="btn-graph-tab active" id="btn-graph-mode-svg">🕸️ Interactive SVG Graph</button>
+            <button class="btn-graph-tab" id="btn-graph-mode-table">📋 Accessible Relational Table</button>
           </div>
 
           <div class="graph-viewport" id="graph-viewport-box">
@@ -1520,6 +2102,41 @@ g.graph-node text.graph-node-sub {
 
             <!-- SVG Container -->
             <svg id="svg-graph"></svg>
+          </div>
+
+          <!-- Accessible Relational Table View -->
+          <div id="graph-table-view-box" class="panel" style="display: none; padding: 16px;">
+            <h3 style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:10px;">Graph Nodes</h3>
+            <div class="table-container" style="max-height: 280px; overflow-y: auto; margin-bottom: 18px;">
+              <table class="forensic-table" aria-label="Forensic Graph Nodes Table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Label</th>
+                    <th>ID / PID</th>
+                    <th>Risk Score</th>
+                    <th>Severity</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="graph-nodes-table-tbody"></tbody>
+              </table>
+            </div>
+
+            <h3 style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:10px;">Graph Relationships &amp; Edges</h3>
+            <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+              <table class="forensic-table" aria-label="Forensic Graph Relationships Table">
+                <thead>
+                  <tr>
+                    <th>Source Entity</th>
+                    <th>Relationship (Edge)</th>
+                    <th>Target Entity</th>
+                    <th>Provenance</th>
+                  </tr>
+                </thead>
+                <tbody id="graph-edges-table-tbody"></tbody>
+              </table>
+            </div>
           </div>
         </section>
 
@@ -2540,6 +3157,33 @@ g.graph-node text.graph-node-sub {
       <div class="modal-footer">
         <button class="btn btn-sm" id="va-btn-promote-ioc" style="margin-right:auto; display:none; background:rgba(239, 68, 68, 0.2); border:1px solid var(--risk-critical); color:var(--risk-critical);">🎯 Promote to IOC</button>
         <button class="btn" data-close="modal-view-artifact">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add Sticky Note to Evidence Board -->
+  <div class="modal-overlay" id="modal-add-board-note" style="display: none;">
+    <div class="modal-window" style="max-width: 500px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">📌</span>
+          <span class="modal-title">Add Note to Evidence Board</span>
+        </div>
+        <button class="modal-close" data-close="modal-add-board-note">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Observation / Note</label>
+          <textarea class="form-input" id="board-note-text" rows="4" placeholder="Enter investigation observation or hypothesis..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Associated Entity (Optional)</label>
+          <input type="text" class="form-input" id="board-note-entity" placeholder="e.g. PID 2968, 198.51.100.23">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-close="modal-add-board-note">Cancel</button>
+        <button class="btn btn-primary" id="btn-submit-board-note">Pin Note</button>
       </div>
     </div>
   </div>
