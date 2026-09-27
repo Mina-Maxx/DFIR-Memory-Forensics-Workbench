@@ -9,6 +9,9 @@ import time
 import queue
 import threading
 import uuid
+import secrets
+import functools
+from logging.handlers import RotatingFileHandler
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, Response, send_file, send_from_directory
 
@@ -42,7 +45,11 @@ logger = get_logger("app")
 
 # Initialize Flask
 app = Flask(__name__, static_folder="static", template_folder="templates")
-app.config["SECRET_KEY"] = "dfir-workbench-secret-2026"
+_app_secret = os.environ.get("DFIR_SECRET_KEY")
+if not _app_secret:
+    _app_secret = secrets.token_hex(32)
+    logger.warning("DFIR_SECRET_KEY not set — using a random ephemeral key (sessions will not survive restart)")
+app.config["SECRET_KEY"] = _app_secret
 
 # Initialize Core Services
 WORKSPACE_DIR = os.path.join(PROJECT_ROOT, "workspace")
@@ -154,7 +161,12 @@ os.makedirs(os.path.dirname(ACTIVITY_LOG_FILE), exist_ok=True)
 activity_logger = logging.getLogger("site_activity")
 activity_logger.setLevel(logging.INFO)
 if not activity_logger.handlers:
-    _act_handler = logging.FileHandler(ACTIVITY_LOG_FILE, encoding="utf-8")
+    _act_handler = RotatingFileHandler(
+        ACTIVITY_LOG_FILE,
+        maxBytes=10 * 1024 * 1024,  # 10 MB
+        backupCount=5,
+        encoding="utf-8"
+    )
     _act_formatter = logging.Formatter('%(asctime)s.%(msecs)03d | %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     _act_handler.setFormatter(_act_formatter)
     activity_logger.addHandler(_act_handler)
@@ -169,6 +181,28 @@ def record_activity(category: str, action: str, details: str = "", client_ip: st
     activity_logger.info(line)
     for h in activity_logger.handlers:
         h.flush()
+
+
+# ---------------- Optional API Key Authentication & Upload Limits ----------------
+DFIR_API_KEY = os.environ.get("DFIR_API_KEY", "").strip()
+
+def require_api_key(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if not DFIR_API_KEY:
+            return f(*args, **kwargs)
+        provided = (
+            request.headers.get("X-API-Key")
+            or (request.headers.get("Authorization") or "").replace("Bearer ", "").strip()
+        )
+        if not provided or not secrets.compare_digest(provided, DFIR_API_KEY):
+            record_activity("SECURITY", "Auth Failed", f"Invalid or missing API key from {request.remote_addr}")
+            return jsonify({"success": False, "error": "Unauthorized – valid API key required"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+ALLOWED_DUMP_EXTENSIONS = {".raw", ".dmp", ".mem", ".vmem", ".lime", ".aff4", ".bin", ".img", ".core", ".vmsn", ".vmss"}
+MAX_UPLOAD_SIZE = int(os.environ.get("DFIR_MAX_UPLOAD_MB", "65536")) * 1024 * 1024
 
 
 # ---------------- Static & Cache Control ----------------
@@ -315,6 +349,7 @@ def api_activate_case():
     return app.response_class(res, mimetype="application/json")
 
 @app.route("/api/cases/<case_id>", methods=["DELETE"])
+@require_api_key
 def api_delete_case(case_id):
     record_activity("CASE_MANAGER", "Delete Case", f"Deleting case_id: {case_id}")
     delete_files = request.args.get("delete_files", "false").lower() == "true"
@@ -357,12 +392,14 @@ def api_verify_evidence():
     return app.response_class(res, mimetype="application/json")
 
 @app.route("/api/evidence/<evidence_id>", methods=["DELETE"])
+@require_api_key
 def api_delete_evidence(evidence_id):
     record_activity("EVIDENCE_MGR", "Delete Evidence", f"Deleting evidence_id: {evidence_id}")
     res = bridge.delete_evidence(evidence_id)
     return app.response_class(res, mimetype="application/json")
 
 @app.route("/api/upload", methods=["POST"])
+@require_api_key
 def api_upload_file():
     if "file" not in request.files:
         return jsonify({"success": False, "error": "No file uploaded"}), 400
@@ -370,14 +407,27 @@ def api_upload_file():
     if not f.filename:
         return jsonify({"success": False, "error": "Empty filename"}), 400
 
+    safe_name = os.path.basename(f.filename)
+    _, ext = os.path.splitext(safe_name)
+    if ext.lower() not in ALLOWED_DUMP_EXTENSIONS:
+        return jsonify({
+            "success": False,
+            "error": f"Invalid file extension '{ext}'. Allowed extensions: {', '.join(sorted(ALLOWED_DUMP_EXTENSIONS))}"
+        }), 400
+
+    if request.content_length and request.content_length > MAX_UPLOAD_SIZE:
+        max_gb = MAX_UPLOAD_SIZE // (1024 * 1024 * 1024)
+        return jsonify({
+            "success": False,
+            "error": f"File exceeds maximum allowed size ({max_gb} GB)"
+        }), 413
+
     cid = request.form.get("case_id") or bridge.active_case_id
     if not cid:
-        from datetime import datetime
-        new_case = case_mgr.create_case(f"DFIR-{datetime.now().strftime('%Y-%m%d-%H%M')}", f"Incident {f.filename}", "Lead Investigator", "Auto-created on upload")
+        new_case = case_mgr.create_case(f"DFIR-{datetime.now().strftime('%Y-%m%d-%H%M')}", f"Incident {safe_name}", "Lead Investigator", "Auto-created on upload")
         cid = new_case.id
         bridge.active_case_id = cid
 
-    safe_name = os.path.basename(f.filename)
     dumps_dir = os.path.join(WORKSPACE_DIR, "dumps")
     os.makedirs(dumps_dir, exist_ok=True)
     dest_path = os.path.join(dumps_dir, safe_name)
@@ -391,6 +441,13 @@ def api_upload_file():
 
     f.save(dest_path)
 
+    if os.path.getsize(dest_path) > MAX_UPLOAD_SIZE:
+        try:
+            os.remove(dest_path)
+        except OSError:
+            pass
+        return jsonify({"success": False, "error": "Uploaded file exceeded maximum allowed size"}), 413
+
     record_activity("FILE_UPLOAD", "Upload Memory Dump", f"Uploaded memory image: {safe_name} to case {cid}")
     res = bridge.import_evidence_path(dest_path, cid)
     return app.response_class(res, mimetype="application/json")
@@ -402,6 +459,7 @@ def api_list_plugins():
     return app.response_class(res, mimetype="application/json")
 
 @app.route("/api/plugins/run", methods=["POST"])
+@require_api_key
 def api_run_plugin():
     data = request.get_json() or {}
     pname = data.get("plugin_name")
@@ -410,6 +468,7 @@ def api_run_plugin():
     return app.response_class(res, mimetype="application/json")
 
 @app.route("/api/triage/start", methods=["POST"])
+@require_api_key
 def api_start_triage():
     data = request.get_json(silent=True) or {}
     eid = data.get("evidence_id", "")

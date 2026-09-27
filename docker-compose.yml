@@ -10,6 +10,9 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=8000
+      - DFIR_SECRET_KEY=${DFIR_SECRET_KEY:-}
+      - DFIR_API_KEY=${DFIR_API_KEY:-}
+      - DFIR_MAX_UPLOAD_MB=${DFIR_MAX_UPLOAD_MB:-65536}
     volumes:
       - ./workspace:/app/workspace
       - ./logs:/app/logs

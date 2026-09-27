@@ -239,6 +239,69 @@ class TestAuditRemediations(unittest.TestCase):
         res_verdict = self.client.post("/api/v2/processes/100/verdict?evidence_id=dummy", json={"verdict": "INVALID_VERDICT"})
         self.assertEqual(res_verdict.status_code, 400)
 
+    def test_p0_secret_key_configuration(self):
+        """P0: Ensure SECRET_KEY is not static/hardcoded and is at least 32 characters."""
+        self.assertIsNotNone(app.config.get("SECRET_KEY"))
+        self.assertNotEqual(app.config["SECRET_KEY"], "dfir-workbench-secret-2026")
+        self.assertGreaterEqual(len(app.config["SECRET_KEY"]), 32)
+
+    def test_p0_api_key_authentication(self):
+        """P0: When DFIR_API_KEY is configured, protected endpoints require valid key."""
+        import app as app_mod
+        original_key = app_mod.DFIR_API_KEY
+        try:
+            app_mod.DFIR_API_KEY = "test-secret-api-key-9988"
+            
+            # 1. Protected endpoint without key -> 401
+            res_no_key = self.client.delete("/api/cases/test-case-id")
+            self.assertEqual(res_no_key.status_code, 401)
+            self.assertIn("Unauthorized", res_no_key.get_json().get("error", ""))
+
+            # 2. Protected endpoint with invalid key -> 401
+            res_bad_key = self.client.delete("/api/cases/test-case-id", headers={"X-API-Key": "wrong-key"})
+            self.assertEqual(res_bad_key.status_code, 401)
+
+            # 3. Protected endpoint with valid X-API-Key header -> proceeds past auth
+            res_valid_x = self.client.delete("/api/cases/non-existent-case-uuid", headers={"X-API-Key": "test-secret-api-key-9988"})
+            self.assertNotEqual(res_valid_x.status_code, 401)
+
+            # 4. Protected endpoint with valid Bearer token -> proceeds past auth
+            res_valid_bearer = self.client.delete("/api/cases/non-existent-case-uuid", headers={"Authorization": "Bearer test-secret-api-key-9988"})
+            self.assertNotEqual(res_valid_bearer.status_code, 401)
+        finally:
+            app_mod.DFIR_API_KEY = original_key
+
+    def test_p0_upload_hardening_extension_whitelist(self):
+        """P0: Enforce strict memory dump extension whitelist on /api/upload."""
+        # Forbidden extension (.exe)
+        bad_data = {"file": (io.BytesIO(b"MZ\x90\x00malicious-executable"), "malware.exe")}
+        res_bad = self.client.post("/api/upload", data=bad_data, content_type="multipart/form-data")
+        self.assertEqual(res_bad.status_code, 400)
+        self.assertIn("Invalid file extension", res_bad.get_json().get("error", ""))
+
+        # Forbidden extension (.py)
+        bad_py = {"file": (io.BytesIO(b"print('attack')"), "script.py")}
+        res_py = self.client.post("/api/upload", data=bad_py, content_type="multipart/form-data")
+        self.assertEqual(res_py.status_code, 400)
+        self.assertIn("Invalid file extension", res_py.get_json().get("error", ""))
+
+        # Allowed extension (.vmem)
+        good_data = {"file": (io.BytesIO(b"valid-memory-dump-bytes"), "snapshot.vmem")}
+        res_good = self.client.post("/api/upload", data=good_data, content_type="multipart/form-data")
+        self.assertEqual(res_good.status_code, 200)
+        self.assertTrue(res_good.get_json().get("success"))
+
+    def test_p1_logging_rotation(self):
+        """P1: Verify activity logger utilizes RotatingFileHandler with bounded size."""
+        from logging.handlers import RotatingFileHandler
+        import app as app_mod
+        handlers = [h for h in app_mod.activity_logger.handlers if isinstance(h, RotatingFileHandler)]
+        self.assertTrue(len(handlers) > 0, "activity_logger does not have a RotatingFileHandler")
+        handler = handlers[0]
+        self.assertEqual(handler.maxBytes, 10 * 1024 * 1024)
+        self.assertEqual(handler.backupCount, 5)
+
 
 if __name__ == "__main__":
     unittest.main()
+
