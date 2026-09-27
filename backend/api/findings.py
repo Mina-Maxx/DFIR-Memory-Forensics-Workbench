@@ -20,7 +20,27 @@ def list_findings():
     svc = _get_svc()
     cid = request.args.get("case_id") or bridge.get_active_case_id()
     status = request.args.get("status")
+    raw_limit = request.args.get("limit")
+    if raw_limit is not None:
+        try:
+            limit = int(raw_limit)
+            if limit < 1 or limit > 5000:
+                return jsonify({"status": "error", "error": "Limit must be an integer between 1 and 5000"}), 400
+        except (ValueError, TypeError):
+            return jsonify({"status": "error", "error": "Limit must be an integer between 1 and 5000"}), 400
+    else:
+        limit = 500
+
+    sev = request.args.get("severity")
+    if sev:
+        ALLOWED_SEVERITIES = {"Critical", "High", "Medium", "Low", "Informational", "Info"}
+        if sev not in ALLOWED_SEVERITIES:
+            return jsonify({"status": "error", "error": f"Invalid severity: {sev}. Allowed: {sorted(ALLOWED_SEVERITIES)}"}), 400
+
     items = svc.list_findings(cid, status=status)
+    if sev:
+        items = [f for f in items if f.severity.lower() == sev.lower()]
+    items = items[:limit]
     return jsonify({
         "status": "success",
         "case_id": cid,
@@ -37,10 +57,17 @@ def create_finding():
     cid = data.get("case_id") or bridge.get_active_case_id()
     title = data.get("title") or "Untitled Forensic Finding"
     sev = data.get("severity") or "Medium"
+    ALLOWED_SEVERITIES = {"Critical", "High", "Medium", "Low", "Informational", "Info"}
+    if sev not in ALLOWED_SEVERITIES:
+        return jsonify({"status": "error", "error": f"Invalid severity: {sev}. Allowed: {sorted(ALLOWED_SEVERITIES)}"}), 400
     conf = data.get("confidence") or "Medium"
     status = data.get("status") or "detected"
     aff = data.get("affected_entity") or ""
-    pid = int(data.get("associated_pid") or data.get("related_pid") or 0)
+    try:
+        raw_pid = data.get("associated_pid") or data.get("related_pid") or 0
+        pid = int(raw_pid) if raw_pid else 0
+    except (ValueError, TypeError):
+        return jsonify({"status": "error", "error": "Invalid PID; must be an integer"}), 400
     pname = data.get("associated_process_name") or data.get("related_process") or ""
     summary = data.get("summary") or data.get("description") or ""
     tech_desc = data.get("technical_description") or ""
@@ -117,8 +144,11 @@ def attach_artifact(finding_id):
     explanation = data.get("explanation") or ""
     if not artifact_id:
         return jsonify({"status": "error", "error": "artifact_id is required"}), 400
-    link = svc.attach_artifact(finding_id, artifact_id, role=role, explanation=explanation)
-    return jsonify({"status": "success", "link": link.to_dict()})
+    try:
+        link = svc.attach_artifact(finding_id, artifact_id, role=role, explanation=explanation)
+        return jsonify({"status": "success", "link": link.to_dict()})
+    except ValueError as e:
+        return jsonify({"status": "error", "error": str(e)}), 400
 
 
 @findings_bp.route("/api/v2/findings/<finding_id>/notes", methods=["POST"])

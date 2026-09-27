@@ -241,6 +241,7 @@ class InvestigationEngine:
                         if pid in correlated:
                             correlated[pid].network_connections.append(conn_info)
 
+                        created_time_str = str(row.get("Created", "") or conn_info.get("created") or "").strip()
                         nc = NetworkConnection(
                             evidence_id=evidence_id,
                             pid=pid,
@@ -252,7 +253,8 @@ class InvestigationEngine:
                             protocol=conn_info["protocol"],
                             state=conn_info["state"],
                             owner=conn_info["owner"],
-                            scope=conn_info["scope"]
+                            scope=conn_info["scope"],
+                            created_time=created_time_str
                         )
                         db_connections.append(nc)
 

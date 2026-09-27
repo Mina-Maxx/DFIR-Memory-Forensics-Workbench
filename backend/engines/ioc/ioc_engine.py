@@ -78,18 +78,29 @@ class IOCEngine:
         seen_ips = set()
 
         for c in conns:
-            addr = c.remote_addr.split(":")[0].strip() if c.remote_addr else ""
-            if not addr or addr in ("0.0.0.0", "127.0.0.1", "::", "-", "*") or addr in seen_ips:
+            raw_addr = (c.remote_addr or "").strip()
+            if not raw_addr:
+                continue
+
+            # Robust IP extraction handling IPv4:port, [IPv6]:port, and bare IPv4/IPv6
+            if raw_addr.startswith("[") and "]" in raw_addr:
+                clean_ip = raw_addr[1:raw_addr.index("]")]
+            elif raw_addr.count(":") == 1:
+                clean_ip = raw_addr.split(":")[0].strip()
+            else:
+                clean_ip = raw_addr
+
+            if not clean_ip or clean_ip in ("0.0.0.0", "127.0.0.1", "::", "::1", "-", "*") or clean_ip in seen_ips:
                 continue
 
             try:
-                ip = ipaddress.ip_address(addr)
-                if ip.is_private or ip.is_loopback or ip.is_multicast or ip.is_reserved:
+                ip_obj = ipaddress.ip_address(clean_ip)
+                if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_multicast or ip_obj.is_reserved or ip_obj.is_link_local:
                     continue
             except ValueError:
                 continue
 
-            seen_ips.add(addr)
+            seen_ips.add(clean_ip)
 
             # 1. Record as Observed Network Artifact
             art = Artifact(
@@ -104,7 +115,7 @@ class IOCEngine:
                 raw_reference=f"Socket: {c.local_addr}:{c.local_port} -> {c.remote_addr}:{c.remote_port} [{c.protocol}]",
                 normalized_data={
                     "scope": "External",
-                    "remote_addr": addr,
+                    "remote_addr": clean_ip,
                     "remote_port": c.remote_port,
                     "local_addr": c.local_addr,
                     "local_port": c.local_port,
@@ -119,31 +130,31 @@ class IOCEngine:
             observed_artifacts.append(art)
 
             # 2. Check if already recorded as an IOC
-            if self.db.ioc_exists(case_id, "ip", addr):
+            if self.db.ioc_exists(case_id, "ip", clean_ip) or self.db.ioc_exists(case_id, "IPv4", clean_ip) or self.db.ioc_exists(case_id, "IPv6", clean_ip):
                 continue
 
-            # 3. Determine severity based on associated process risk
+            # 3. Only promote to candidate IOC if originating process is suspicious/high risk
+            # Normal external connections are recorded as Observed Network Artifacts, not automatically assumed IOCs
             proc = processes.get(c.pid)
-            if proc and proc.risk_score >= 70:
-                sev = "High"
-            elif proc and proc.risk_score >= 40:
-                sev = "Medium"
-            else:
-                sev = "Low"
+            proc_risk = proc.risk_score if proc else 0
 
-            ioc = IOC(
-                id=str(uuid.uuid4()),
-                case_id=case_id,
-                type="ip",
-                value=addr,
-                severity=sev,
-                source="netscan",
-                description=f"Observed External IP in socket from PID {c.pid} ({c.process_name or 'unknown'})",
-                associated_pid=c.pid,
-                created_at=datetime.now().isoformat()
-            )
-            self.db.create_ioc(ioc)
-            harvested.append(ioc)
+            # Promote to IOC if process has notable risk (risk_score >= 40)
+            if proc_risk >= 40:
+                sev = "High" if proc_risk >= 70 else "Medium"
+                ioc_type = "IPv6" if isinstance(ip_obj, ipaddress.IPv6Address) else "IPv4"
+                ioc = IOC(
+                    id=str(uuid.uuid4()),
+                    case_id=case_id,
+                    type=ioc_type,
+                    value=clean_ip,
+                    severity=sev,
+                    source="netscan",
+                    description=f"External IP associated with suspicious PID {c.pid} ({c.process_name or 'unknown'}, Risk: {proc_risk})",
+                    associated_pid=c.pid,
+                    created_at=datetime.now().isoformat()
+                )
+                self.db.create_ioc(ioc)
+                harvested.append(ioc)
 
         # Bulk save observed artifacts
         if observed_artifacts:

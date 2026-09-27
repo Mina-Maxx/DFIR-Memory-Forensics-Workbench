@@ -37,6 +37,7 @@ class TimelineEngine:
         # 1. Process timestamps
         processes = self.db.list_processes(evidence_id)
         for p in processes:
+            proc_source = "windows.pslist.PsList" if p.in_pslist else "windows.psscan.PsScan"
             # Process Creation
             if p.create_time and p.create_time.strip() and p.create_time.lower() != "n/a":
                 events.append(TimelineEvent(
@@ -48,7 +49,7 @@ class TimelineEngine:
                     description=f"Process created: {p.name} (PID: {p.pid}, PPID: {p.ppid})",
                     pid=p.pid,
                     process_name=p.name,
-                    source_plugin="windows.pslist.PsList",
+                    source_plugin=proc_source,
                     severity="High" if p.risk_score >= 70 else ("Medium" if p.risk_score >= 40 else "Low"),
                     details=f"Command line: {p.command_line or 'N/A'}",
                     confidence="High",
@@ -66,7 +67,7 @@ class TimelineEngine:
                     description=f"Process terminated: {p.name} (PID: {p.pid})",
                     pid=p.pid,
                     process_name=p.name,
-                    source_plugin="windows.pslist.PsList",
+                    source_plugin=proc_source,
                     severity="Low",
                     details=f"Exit time recorded by operating system EPROCESS block",
                     confidence="High",

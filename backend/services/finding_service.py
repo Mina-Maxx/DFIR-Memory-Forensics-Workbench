@@ -17,6 +17,16 @@ from core.logger import get_logger
 
 logger = get_logger("app")
 
+ALLOWED_TRANSITIONS = {
+    "detected": ["triaged", "false_positive", "investigating", "confirmed"],
+    "triaged": ["investigating", "false_positive", "inconclusive", "closed", "confirmed"],
+    "investigating": ["confirmed", "false_positive", "inconclusive", "triaged", "closed"],
+    "confirmed": ["closed", "investigating"],
+    "false_positive": ["triaged", "investigating"],
+    "inconclusive": ["investigating", "closed"],
+    "closed": ["investigating", "triaged"]
+}
+
 
 class FindingService:
     def __init__(self, db: DatabaseManager):
@@ -80,7 +90,14 @@ class FindingService:
         if not finding:
             return None
 
-        old_status = finding.status
+        old_status = finding.status or "detected"
+        allowed = ALLOWED_TRANSITIONS.get(old_status, [])
+        if new_status != old_status and new_status not in allowed:
+            raise ValueError(
+                f"Invalid lifecycle transition from '{old_status}' to '{new_status}'. "
+                f"Allowed transitions for '{old_status}' are: {allowed}"
+            )
+
         finding.status = new_status
         finding.updated_at = datetime.now().isoformat()
         self.db.update_finding(finding)
@@ -102,8 +119,9 @@ class FindingService:
         if not finding:
             return None
 
+        # Prevent arbitrary bypass of lifecycle state machine through generic update
         for k, v in updates.items():
-            if hasattr(finding, k) and k not in ("id", "case_id", "created_at"):
+            if hasattr(finding, k) and k not in ("id", "case_id", "created_at", "status", "verdict"):
                 setattr(finding, k, v)
         finding.updated_at = datetime.now().isoformat()
         finding.investigator = analyst
@@ -115,16 +133,29 @@ class FindingService:
 
     def attach_artifact(self, finding_id: str, artifact_id: str, role: str = "supports", explanation: str = "") -> FindingArtifact:
         finding = self.db.get_finding(finding_id)
+        if not finding:
+            raise ValueError(f"Finding not found: {finding_id}")
+
+        artifact = self.db.get_artifact(artifact_id)
+        if not artifact:
+            raise ValueError(f"Artifact not found: {artifact_id}")
+
+        if finding.case_id and artifact.case_id and finding.case_id != artifact.case_id:
+            raise ValueError(
+                f"Cross-case artifact attachment prohibited: Finding belongs to case '{finding.case_id}', "
+                f"but Artifact belongs to case '{artifact.case_id}'"
+            )
+
         link = FindingArtifact(
             finding_id=finding_id,
             artifact_id=artifact_id,
-            case_id=finding.case_id if finding else "",
+            case_id=finding.case_id,
             role=role,
             explanation=explanation,
             relationship=role
         )
         self.db.add_finding_artifact(link)
-        logger.info(f"Attached artifact {artifact_id} to finding {finding_id} (Role: {role})")
+        logger.info(f"Attached artifact {artifact_id} to finding {finding_id} in case {finding.case_id} (Role: {role})")
         return link
 
     def add_note(self, finding_id: str, author: str, content: str) -> AnalystNote:

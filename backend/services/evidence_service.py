@@ -19,7 +19,7 @@ logger = get_logger("app")
 def compute_hashes(filepath: str) -> Dict[str, str]:
     """Computes SHA-256 (primary) and MD5 (secondary) hashes for forensic integrity."""
     sha256 = hashlib.sha256()
-    md5 = hashlib.md5()
+    md5 = hashlib.md5(usedforsecurity=False)
     with open(filepath, "rb") as f:
         while chunk := f.read(1024 * 1024):  # 1MB chunks
             sha256.update(chunk)

@@ -38,7 +38,7 @@
    - **Threat Hunter & ReDoS-Guarded IOC Engine**: استخراج مؤشرات الاختراق وتصديرها بصيغة **STIX 2.1**.
    - **Forensic Timeline**: تسلسل زمني دقيق لإنشاء العمليات والاتصالات.
    - **Snapshot Diffing**: مقارنة ذاكرتين عشوائيتين (Baseline vs Incident) لرصد مسارات التسلل والتغيرات.
-   - **Court-Admissible Arabic RTL Reports**: توليد تقارير جنائية رسمية باللغة العربية مطابقة لمعايير **ISO/IEC 27037** مع عزل النصوص التقنية الإنجليزية وتطهير تصدير CSV ضد هجمات Formula Injection.
+   - **Arabic RTL Forensic Reports**: توليد تقارير جنائية باللغة العربية مصممة للاسترشاد بمبادئ معايير **ISO/IEC 27037** لتوثيق الأدلة الرقمية وسلسلة الحيازة مع عزل النصوص التقنية الإنجليزية وتطهير تصدير CSV ضد هجمات Formula Injection.
 
 ---
 

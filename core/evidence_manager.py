@@ -22,7 +22,7 @@ class EvidenceManager:
         """Compute SHA256 and MD5 with streaming chunks and progress callback."""
         total_size = os.path.getsize(filepath)
         sha256 = hashlib.sha256()
-        md5 = hashlib.md5()
+        md5 = hashlib.md5(usedforsecurity=False)
         read_bytes = 0
         chunk_size = 4 * 1024 * 1024  # 4MB chunks
 

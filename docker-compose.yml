@@ -6,7 +6,7 @@ services:
     container_name: dfir-memory-workbench
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
       - HOST=0.0.0.0
       - PORT=8000

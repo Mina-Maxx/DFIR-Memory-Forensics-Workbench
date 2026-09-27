@@ -192,14 +192,28 @@ class RiskEngine:
         # 8. Memory injection (RWX regions)
         proc_mem = [m for m in memory_anomalies if m.get("pid") == pid]
         if proc_mem:
+            rwx_mem = [
+                m for m in proc_mem
+                if not m.get("protection")
+                or any(x in (m.get("protection") or "").upper() for x in ("EXECUTE_READWRITE", "EXECUTE_WRITECOPY", "RWX"))
+                or ("EXECUTE" in (m.get("protection") or "").upper() and "WRITE" in (m.get("protection") or "").upper())
+            ]
             r = self.rules.rules.get("R-MEM-01")
             if r and r.enabled:
-                indicators.append(Indicator(
-                    r.id, r.name, r.category, r.weight,
-                    f"Found {len(proc_mem)} RWX executable memory region(s) (Malfind)",
-                    f"Address: {proc_mem[0].get('start_address')}", "High",
-                    r.mitre_technique_id, r.mitre_technique_name, r.mitre_tactic
-                ))
+                if rwx_mem:
+                    indicators.append(Indicator(
+                        r.id, r.name, r.category, r.weight,
+                        f"Found {len(rwx_mem)} confirmed RWX executable/writable memory region(s) (Malfind)",
+                        f"Address: {rwx_mem[0].get('start_address')}, Protection: {rwx_mem[0].get('protection')}", "High",
+                        r.mitre_technique_id, r.mitre_technique_name, r.mitre_tactic
+                    ))
+                else:
+                    indicators.append(Indicator(
+                        r.id, r.name, r.category, max(15, r.weight // 2),
+                        f"Found {len(proc_mem)} executable memory anomaly region(s) (Protection: {proc_mem[0].get('protection', 'Unknown')})",
+                        f"Address: {proc_mem[0].get('start_address')}", "Medium",
+                        r.mitre_technique_id, r.mitre_technique_name, r.mitre_tactic
+                    ))
 
         # Calculate final 0-100 score
         total_score = min(100, sum(ind.weight for ind in indicators))

@@ -8,6 +8,7 @@ import json
 import time
 import queue
 import threading
+import uuid
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, Response, send_file, send_from_directory
 
@@ -330,7 +331,12 @@ def api_import_evidence():
     data = request.get_json() or {}
     cid = data.get("case_id") or bridge.active_case_id
     filepath = data.get("filepath", "").strip()
-    res = bridge.import_evidence_path(filepath, cid)
+    if not filepath:
+        return jsonify({"success": False, "error": "Missing or empty filepath"}), 400
+    real_path = os.path.realpath(filepath)
+    if not os.path.isfile(real_path):
+        return jsonify({"success": False, "error": f"Evidence file not found: {filepath}"}), 400
+    res = bridge.import_evidence_path(real_path, cid)
     return app.response_class(res, mimetype="application/json")
 
 @app.route("/api/evidence/activate", methods=["POST"])
@@ -369,7 +375,17 @@ def api_upload_file():
         bridge.active_case_id = cid
 
     safe_name = os.path.basename(f.filename)
-    dest_path = os.path.join(WORKSPACE_DIR, "dumps", safe_name)
+    dumps_dir = os.path.join(WORKSPACE_DIR, "dumps")
+    os.makedirs(dumps_dir, exist_ok=True)
+    dest_path = os.path.join(dumps_dir, safe_name)
+
+    # Prevent overwriting an existing evidence file (chain of custody preservation)
+    if os.path.exists(dest_path):
+        unique_prefix = uuid.uuid4().hex[:8]
+        safe_name = f"{unique_prefix}_{safe_name}"
+        dest_path = os.path.join(dumps_dir, safe_name)
+        logger.info(f"Existing file collision detected. Saved upload as unique immutable file: {safe_name}")
+
     f.save(dest_path)
 
     record_activity("FILE_UPLOAD", "Upload Memory Dump", f"Uploaded memory image: {safe_name} to case {cid}")
@@ -600,15 +616,6 @@ def api_yara_scan():
         pass
     except Exception as e:
         logger.error(f"YARA scan error: {e}")
-
-    if not matches and ("suspicious" in rule_text.lower() or "beacon" in rule_text.lower() or "shell" in rule_text.lower()):
-        matches.append({
-            "rule": "Heuristic_Suspicious_Memory",
-            "tags": ["cobalt_strike", "rwx_injected"],
-            "pid": 4284,
-            "target": "powershell.exe (VirtualAlloc RWX 0x7fff0000)",
-            "strings": [(0x1000, "$s1", "VirtualAlloc"), (0x1040, "$s2", "CreateRemoteThread")]
-        })
 
     return jsonify({"success": True, "count": len(matches), "matches": matches})
 

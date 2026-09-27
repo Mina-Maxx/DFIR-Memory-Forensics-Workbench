@@ -15,7 +15,16 @@ def list_artifacts():
     eid = request.args.get("evidence_id") or bridge.get_active_evidence_id()
     atype = request.args.get("type")
     entity_id = request.args.get("entity_id")
-    limit = int(request.args.get("limit", 500))
+    raw_limit = request.args.get("limit")
+    if raw_limit is not None:
+        try:
+            limit = int(raw_limit)
+            if limit < 1 or limit > 5000:
+                return jsonify({"status": "error", "error": "Invalid limit parameter; must be an integer between 1 and 5000"}), 400
+        except (ValueError, TypeError):
+            return jsonify({"status": "error", "error": "Invalid limit parameter; must be an integer between 1 and 5000"}), 400
+    else:
+        limit = 500
 
     artifacts = bridge.db.list_artifacts(
         case_id=cid,

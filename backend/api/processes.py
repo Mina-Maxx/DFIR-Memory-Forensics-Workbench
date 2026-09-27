@@ -53,8 +53,13 @@ def set_verdict(pid):
     eid = request.args.get("evidence_id") or bridge.get_active_evidence_id()
     if not eid:
         return jsonify({"status": "error", "error": "No active evidence selected"}), 400
-    if not verdict:
-        return jsonify({"status": "error", "error": "verdict is required"}), 400
+    ALLOWED_VERDICTS = {"legitimate", "suspicious", "malicious", "inconclusive", "whitelisted", "unreviewed"}
+    if not verdict or str(verdict).lower() not in ALLOWED_VERDICTS:
+        return jsonify({
+            "status": "error",
+            "error": f"Invalid verdict: {verdict}. Allowed verdicts: {sorted(ALLOWED_VERDICTS)}"
+        }), 400
+    verdict = str(verdict).lower()
 
     proc = bridge.db.get_process_by_pid(eid, pid)
     if not proc:

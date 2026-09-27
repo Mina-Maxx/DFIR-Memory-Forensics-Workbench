@@ -31,7 +31,11 @@ def add_ioc():
     sev = data.get("severity", "Medium")
     src = data.get("source", "Analyst Manual")
     desc = data.get("description", "")
-    pid = int(data.get("associated_pid") or data.get("pid") or 0)
+    try:
+        raw_pid = data.get("associated_pid") or data.get("pid") or 0
+        pid = int(raw_pid) if raw_pid else 0
+    except (ValueError, TypeError):
+        return jsonify({"status": "error", "error": "Invalid PID; must be an integer"}), 400
 
     ioc = bridge.ioc_engine.add_ioc(cid, itype, val, sev, src, desc, pid=pid)
     if not ioc:

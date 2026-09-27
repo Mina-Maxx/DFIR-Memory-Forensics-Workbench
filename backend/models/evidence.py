@@ -25,8 +25,8 @@ class Evidence:
     import_timestamp: str = field(default_factory=get_timestamp)
     acquisition_timestamp: str = ""
     status: str = "Ready"
-    verification_status: str = "Verified"
-    last_verified: str = field(default_factory=get_timestamp)
+    verification_status: str = "Unverified"
+    last_verified: str = ""
     metadata: str = "{}"
     id: str = field(default_factory=get_uuid)
     created_at: str = field(default_factory=get_timestamp)

@@ -31,11 +31,20 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application source code
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p workspace/dumps workspace/exports workspace/cache logs
+# Create necessary directories and non-root user
+RUN mkdir -p workspace/dumps workspace/exports workspace/cache logs && \
+    groupadd -r dfir && useradd -r -g dfir -d /app -s /bin/bash dfir && \
+    chown -R dfir:dfir /app
+
+# Switch to non-root user
+USER dfir
 
 # Expose web server port
 EXPOSE 8000
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/api/status || exit 1
 
 # Run the DFIR web server
 CMD ["python", "app.py"]
