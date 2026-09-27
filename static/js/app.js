@@ -339,8 +339,9 @@
       // 3. Fetch evidence list for active case
       if (state.activeCase) {
         state.evidenceList = await API.get(`/api/evidence?case_id=${encodeURIComponent(state.activeCase.id)}`);
-        if (!state.activeEvidence && state.evidenceList.length > 0) {
-          const res = await API.post("/api/evidence/activate", { evidence_id: state.evidenceList[0].id });
+        const primaryEv = state.evidenceList.find(e => e.filename === "infected.vmem") || state.evidenceList[0];
+        if (primaryEv && (!state.activeEvidence || (state.activeEvidence.filename && state.activeEvidence.filename.includes("collision_test")))) {
+          const res = await API.post("/api/evidence/activate", { evidence_id: primaryEv.id });
           if (res.success) {
             state.activeEvidence = res.evidence;
           }
