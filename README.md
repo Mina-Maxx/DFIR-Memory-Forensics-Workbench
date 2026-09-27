@@ -65,14 +65,108 @@ DFIR-Web-App/
 
 ---
 
-## 🛠️ متطلبات التشغيل (Prerequisites)
+## 📥 طريقة التنزيل (Download & Clone)
 
-- **Python 3.10+** (مُثبت ومُهيأ في مسار النظام)
-- تثبيت المتطلبات عبر:
-  ```bash
-  pip install -r requirements.txt
-  ```
-  *(تشمل `flask`, `volatility3`, `pyyaml`, `yara-python`)*
+### الخيار 1: عبر Git (مستحسن)
+افتح موجه الأوامر (Terminal / Command Prompt) ونفذ الأمر التالي:
+```bash
+git clone https://github.com/Mina-Maxx/DFIR-Memory-Forensics-Workbench.git
+cd DFIR-Memory-Forensics-Workbench
+```
+
+### الخيار 2: كملف مضغوط (ZIP)
+1. توجه إلى صفحة المستودع على GitHub: [DFIR-Memory-Forensics-Workbench](https://github.com/Mina-Maxx/DFIR-Memory-Forensics-Workbench).
+2. اضغط على الزر الأخضر **`< > Code`** ثم اختر **Download ZIP**.
+3. قم بفك ضغط الملف في مجلد التحقيقات الخاص بك وافتح المجلد.
+
+---
+
+## ⚙️ خطوات التثبيت بالتفصيل (Step-by-Step Installation)
+
+### 📌 المتطلبات الأساسية (Prerequisites):
+* **Python 3.10 أو أحدث** مثبت في النظام.  
+  *(تأكد من اختيار `Add python.exe to PATH` أثناء التثبيت على ويندوز)*
+* مدير الحزم **pip** ومحرر البيئة الافتراضية **venv**.
+
+---
+
+### 1️⃣ التثبيت على نظام ويندوز (Windows):
+
+1. **افتح موجه الأوامر (CMD أو PowerShell) كمسؤول داخل مجلد المشروع:**
+   ```cmd
+   cd path\to\DFIR-Memory-Forensics-Workbench
+   ```
+
+2. **أنشئ بيئة افتراضية مستقلة (Virtual Environment):**
+   ```cmd
+   python -m venv venv
+   ```
+
+3. **فعّل البيئة الافتراضية:**
+   ```cmd
+   venv\Scripts\activate
+   ```
+
+4. **قم بتثبيت حزم بايثون المطلوبة:**
+   ```cmd
+   python -m pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+   *(الحزم تشمل: `flask`, `volatility3`, `pyyaml`, `yara-python`)*
+
+---
+
+### 2️⃣ التثبيت على نظام لينكس / ماك (Linux & macOS):
+*(يدعم: Kali Linux, Ubuntu, Debian, SANS SIFT Workstation, REMnux, Fedora, Arch)*
+
+1. **تثبيت متطلبات النظام الأساسية عبر مدير الحزم:**
+   - **في أنظمة Debian / Ubuntu / Kali / SIFT:**
+     ```bash
+     sudo apt update
+     sudo apt install -y python3 python3-pip python3-venv python3-dev build-essential libyara-dev git
+     ```
+   - **في أنظمة Fedora / RedHat:**
+     ```bash
+     sudo dnf install -y python3 python3-pip python3-devel gcc git
+     ```
+   - **في أنظمة Arch Linux:**
+     ```bash
+     sudo pacman -S python python-pip base-devel git
+     ```
+
+2. **إنشاء البيئة الافتراضية وتفعيلها:**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+3. **تثبيت حزم بايثون والاعتماديات:**
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+
+4. **منح صلاحيات التنفيذ لسكربت التشغيل:**
+   ```bash
+   chmod +x run.sh
+   ```
+
+---
+
+### 3️⃣ التثبيت والتشغيل عبر Docker (بدون أي متطلبات سوى Docker):
+
+إذا كنت لا ترغب في تثبيت بايثون وحزمه محلياً، يمكنك بناء وتشغيل الحاوية الجاهزة:
+```bash
+docker compose up --build -d
+```
+
+---
+
+### 🔍 (اختياري ولكن موصى به) إعداد رموز النواة لويندوز (Volatility 3 Symbols):
+لكي يعمل إطار عمل **Volatility 3** بأعلى دقة في قراءة هياكل نواة ويندوز المعقدة:
+* يقوم Volatility 3 بتنزيل الرموز تلقائياً عبر الإنترنت عند توفر اتصال.
+* للعمل في مختبرات التحقيق المعزولة عن الإنترنت (**Air-Gapped Forensic Labs**):  
+  يمكنك تنزيل حزمة الرموز الجاهزة من مستودع [volatility3-symbols](https://github.com/volatilityfoundation/volatility3-symbols) ونقلها إلى مجلد الرموز الخاص بالحزمة `volatility3/symbols/windows`.
 
 ---
 
