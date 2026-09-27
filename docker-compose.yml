@@ -1,15 +1,1 @@
-version: '3.8'
-
-services:
-  dfir-workbench:
-    build: .
-    container_name: dfir-memory-workbench
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:8000:8000"
-    environment:
-      - HOST=0.0.0.0
-      - PORT=8000
-    volumes:
-      - ./workspace:/app/workspace
-      - ./logs:/app/logs
+PLACEHOLDER3
