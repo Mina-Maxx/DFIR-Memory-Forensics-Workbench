@@ -501,7 +501,7 @@ def api_hunt_iocs():
 @app.route("/api/iocs/stix", methods=["GET"])
 def api_download_stix():
     cid = request.args.get("case_id") or bridge.active_case_id
-    stix_json = report_exporters.build_stix(db.list_iocs(cid))
+    stix_json = build_stix(db.list_iocs(cid))
     return Response(stix_json, mimetype="application/json", headers={"Content-Disposition": f"attachment;filename=stix_{cid}.json"})
 
 @app.route("/api/timeline", methods=["GET"])

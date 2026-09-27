@@ -614,17 +614,34 @@
 
   function setupDrawer() {
     const drawer = el("terminal-drawer");
-    const chevron = el("drawer-chevron");
+    const drawerToggle = el("drawer-toggle");
     const chevronBtn = el("drawer-chevron-btn");
     const clearBtn = el("btn-clear-terminal");
-    let expanded = true;
+    let expanded = false; // Starts docked/collapsed at 34px
 
-    if (chevronBtn && drawer) {
+    function setDrawerExpanded(exp) {
+      expanded = exp;
+      if (drawer) {
+        drawer.style.height = expanded ? "210px" : "34px";
+      }
+      if (chevronBtn) {
+        chevronBtn.innerHTML = expanded
+          ? '<span id="drawer-chevron">▼</span> Minimize'
+          : '<span id="drawer-chevron">▲</span> Expand';
+      }
+    }
+
+    if (drawerToggle) {
+      drawerToggle.onclick = (e) => {
+        if (e.target.closest("#btn-clear-terminal") || e.target.closest(".drawer-tab")) return;
+        setDrawerExpanded(!expanded);
+      };
+    }
+
+    if (chevronBtn) {
       chevronBtn.onclick = (e) => {
         e.stopPropagation();
-        expanded = !expanded;
-        drawer.style.height = expanded ? "220px" : "36px";
-        if (chevron) chevron.textContent = expanded ? "▼" : "▲";
+        setDrawerExpanded(!expanded);
       };
     }
 
@@ -640,6 +657,7 @@
     document.querySelectorAll(".drawer-tab").forEach(tab => {
       tab.addEventListener("click", (e) => {
         e.stopPropagation();
+        if (!expanded) setDrawerExpanded(true);
         document.querySelectorAll(".drawer-tab").forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
         if (tab.dataset.tab === "tab-jobs") {
@@ -648,6 +666,9 @@
         }
       });
     });
+
+    window.expandTerminalDrawer = () => setDrawerExpanded(true);
+    window.collapseTerminalDrawer = () => setDrawerExpanded(false);
   }
 
   function refreshCurrentPage() {
@@ -674,11 +695,8 @@
       logTerminal("INFO", "Initiating automated memory triage pipeline...");
 
       // Auto-expand terminal drawer to show live execution
-      const drawer = el("terminal-drawer");
-      const chevron = el("drawer-chevron");
-      if (drawer) {
-        drawer.style.height = "220px";
-        if (chevron) chevron.textContent = "▼";
+      if (window.expandTerminalDrawer) {
+        window.expandTerminalDrawer();
       }
 
       const res = await API.post("/api/triage/start", { evidence_id: state.activeEvidence.id });
@@ -859,19 +877,27 @@
 
       const visible = matchesSearch && matchesRisk;
 
+      const hasChildren = children.length > 0;
+      const toggleHtml = hasChildren
+        ? `<span class="tree-toggle" data-pid="${proc.pid}" onclick="window.toggleTreeNode(event, ${proc.pid})" title="Toggle branch">▼</span>`
+        : `<span style="display:inline-block; width:18px;"></span>`;
+
       let childrenHtml = "";
-      if (children.length > 0) {
-        childrenHtml = children.map(c => buildNodeHtml(c)).join("");
+      if (hasChildren) {
+        childrenHtml = `<div class="tree-children" id="tree-children-${proc.pid}">${children.map(c => buildNodeHtml(c)).join("")}</div>`;
       }
 
       return `
         <div class="tree-node" style="${visible ? "" : "opacity:0.3;"}">
-          <div class="tree-node-item" onclick="window.inspectProcess(${proc.pid})">
-            <span style="font-weight:700; color:var(--text-primary);">${escapeHtml(proc.name)}</span>
-            <span class="badge ${riskClass}">PID ${proc.pid}</span>
-            <span style="color:var(--text-muted); font-size:11px;">PPID ${proc.ppid}</span>
-            ${hiddenTag}
-            ${proc.risk_score ? `<span style="color:var(--text-muted); font-size:11px;">Score: ${proc.risk_score}</span>` : ""}
+          <div style="display:inline-flex; align-items:center; gap:4px;">
+            ${toggleHtml}
+            <div class="tree-node-item" onclick="window.inspectProcess(${proc.pid})" title="Click to inspect in Deep-Dive Focus Mode">
+              <span style="font-weight:700; color:var(--text-primary);">${escapeHtml(proc.name)}</span>
+              <span class="badge ${riskClass}">PID ${proc.pid}</span>
+              <span style="color:var(--text-muted); font-size:11px;">PPID ${proc.ppid}</span>
+              ${hiddenTag}
+              ${proc.risk_score ? `<span style="color:var(--text-muted); font-size:11px;">Score: ${proc.risk_score}</span>` : ""}
+            </div>
           </div>
           ${childrenHtml}
         </div>
@@ -885,16 +911,28 @@
     if (btnExpand) {
       btnExpand.onclick = () => {
         logActivity("TREE_ACTION", "Expand All", "User clicked Expand All in Process Tree");
-        document.querySelectorAll("#process-tree-root .tree-node").forEach(n => n.style.display = "");
+        document.querySelectorAll("#process-tree-root .tree-children").forEach(n => n.style.display = "block");
+        document.querySelectorAll("#process-tree-root .tree-toggle").forEach(t => t.textContent = "▼");
       };
     }
     const btnCollapse = el("btn-tree-collapse");
     if (btnCollapse) {
       btnCollapse.onclick = () => {
         logActivity("TREE_ACTION", "Collapse All", "User clicked Collapse All in Process Tree");
-        document.querySelectorAll("#process-tree-root .tree-node .tree-node").forEach(n => n.style.display = "none");
+        document.querySelectorAll("#process-tree-root .tree-children").forEach(n => n.style.display = "none");
+        document.querySelectorAll("#process-tree-root .tree-toggle").forEach(t => t.textContent = "▶");
       };
     }
+
+    window.toggleTreeNode = function(e, pid) {
+      e.stopPropagation();
+      const box = el(`tree-children-${pid}`);
+      const btn = e.currentTarget;
+      if (!box) return;
+      const isHidden = box.style.display === "none";
+      box.style.display = isHidden ? "block" : "none";
+      btn.textContent = isHidden ? "▼" : "▶";
+    };
 
     const searchInput = el("tree-search-input");
     if (searchInput) {
@@ -1842,6 +1880,33 @@
       };
     }
 
+    const btnTimelineCsv = el("btn-export-timeline-csv");
+    if (btnTimelineCsv) {
+      btnTimelineCsv.onclick = () => {
+        if (!state.activeEvidence || !state.timeline || state.timeline.length === 0) {
+          showToast("No timeline events available to export", "warning");
+          return;
+        }
+        logActivity("TIMELINE_ACTION", "Export CSV", `Exported ${state.timeline.length} timeline events to CSV`);
+        const headers = ["Timestamp", "Event Type", "PID", "Process Name", "Severity", "Description"];
+        const rows = state.timeline.map(e => [
+          `"${e.timestamp || ''}"`,
+          `"${e.event_type || ''}"`,
+          e.pid || '',
+          `"${e.process_name || ''}"`,
+          `"${e.severity || 'Normal'}"`,
+          `"${(e.description || '').replace(/"/g, '""')}"`
+        ]);
+        const csv = [headers.join(",")].concat(rows.map(r => r.join(","))).join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `timeline_${(state.activeEvidence.filename || 'evidence').replace(/[^a-zA-Z0-9_-]/g, '_')}.csv`;
+        a.click();
+        showToast("Timeline events exported to CSV", "success");
+      };
+    }
+
     if (!state.activeEvidence) {
       state.timeline = [];
       renderTimelineTable();
@@ -1935,7 +2000,9 @@
     renderPluginsList();
   };
 
-  el("btn-execute-plugin").onclick = async () => {
+  const btnExecPlugin = el("btn-execute-plugin");
+  if (btnExecPlugin) {
+    btnExecPlugin.onclick = async () => {
     if (!state.selectedPlugin || !state.activeEvidence) {
       customAlert({ title: "Plugin Execution", message: "Please select a plugin and active evidence first.", type: "warning" });
       return;
@@ -1964,6 +2031,7 @@
       logTerminal("ERROR", `Failed to run plugin: ${err.message}`);
     }
   };
+}
 
   function renderPluginOutputTable(headers, rows) {
     const thead = el("plugin-result-thead");
@@ -2359,6 +2427,29 @@
   function setupModals() {
     document.querySelectorAll("[data-close]").forEach(btn => {
       btn.onclick = () => closeModal(btn.dataset.close);
+    });
+
+    // Close on backdrop click for all modals
+    document.querySelectorAll(".modal-overlay").forEach(modal => {
+      modal.onclick = (e) => {
+        if (e.target === modal) {
+          closeModal(modal.id);
+        }
+      };
+    });
+
+    // Escape key closes active modal or process focus drawer
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const pDrawer = el("process-focus-drawer");
+        if (pDrawer && pDrawer.classList.contains("open")) {
+          closeProcessFocusDrawer();
+          return;
+        }
+        document.querySelectorAll(".modal-overlay.active").forEach(m => {
+          closeModal(m.id);
+        });
+      }
     });
 
     const btnNewCase = el("btn-modal-create-case");
@@ -3468,7 +3559,7 @@
         switchToPage("page-timeline");
         if (state.investigationFocus) {
           const term = state.investigationFocus.pid || state.investigationFocus.name || "";
-          const tlSearch = el("timeline-search-input");
+          const tlSearch = el("timeline-search");
           if (tlSearch && term) {
             tlSearch.value = term;
             tlSearch.dispatchEvent(new Event("input"));
@@ -3548,12 +3639,26 @@
 
     const btnToggleDeepDive = el("btn-toggle-focus-panel");
     if (btnToggleDeepDive) {
-      btnToggleDeepDive.onclick = () => {
-        const pid = state.investigationFocus?.pid || (state.investigationFocus?.type === "process" ? state.investigationFocus.id : null) || state.focusedPid;
+      btnToggleDeepDive.onclick = async () => {
+        let pid = state.investigationFocus?.pid || (state.investigationFocus?.type === "process" ? state.investigationFocus.id : null) || state.focusedPid;
+        if (!pid) {
+          if (!state.processes || state.processes.length === 0) {
+            if (state.activeEvidence) {
+              try {
+                state.processes = await API.get(`/api/processes?evidence_id=${encodeURIComponent(state.activeEvidence.id)}`);
+              } catch (e) {}
+            }
+          }
+          if (state.processes && state.processes.length > 0) {
+            const susp = state.processes.slice().sort((a, b) => (b.risk_score || 0) - (a.risk_score || 0))[0];
+            pid = susp ? susp.pid : state.processes[0].pid;
+          }
+        }
         if (pid) {
-          openProcessFocusDrawer(pid);
+          await openProcessFocusDrawer(pid);
         } else {
-          showToast("No active process focus. Click any process to focus and inspect.", "info");
+          switchToPage("page-processes");
+          showToast("Select a process to inspect forensic details.", "info");
         }
       };
     }
@@ -4110,6 +4215,34 @@
 
     const refreshBtn = el("btn-refresh-artifacts");
     if (refreshBtn) refreshBtn.onclick = () => loadArtifactsData();
+
+    const exportCsvBtn = el("btn-export-artifacts-csv");
+    if (exportCsvBtn) {
+      exportCsvBtn.onclick = () => {
+        if (!state.artifacts || state.artifacts.length === 0) {
+          showToast("No artifacts available to export", "warning");
+          return;
+        }
+        logActivity("ARTIFACT_ACTION", "Export CSV", `Exported ${state.artifacts.length} artifacts to CSV`);
+        const headers = ["Artifact ID", "Type", "Source Plugin", "Entity ID", "Timestamp", "Raw Reference", "SHA-256"];
+        const rows = state.artifacts.map(a => [
+          `"${a.id || ''}"`,
+          `"${a.type || ''}"`,
+          `"${a.plugin || a.source_plugin || ''}"`,
+          `"${a.entity_id || ''}"`,
+          `"${a.created_at || a.timestamp || ''}"`,
+          `"${(a.raw_ref || '').replace(/"/g, '""')}"`,
+          `"${a.sha256 || ''}"`
+        ]);
+        const csv = [headers.join(",")].concat(rows.map(r => r.join(","))).join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `artifacts_${(state.activeEvidence?.filename || 'evidence').replace(/[^a-zA-Z0-9_-]/g, '_')}.csv`;
+        a.click();
+        showToast("Forensic artifacts exported to CSV", "success");
+      };
+    }
   }
 
   window.setFocusFromArtifact = function(artId) {
