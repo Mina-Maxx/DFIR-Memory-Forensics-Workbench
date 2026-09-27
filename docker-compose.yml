@@ -1,1 +1,22 @@
-PLACEHOLDER3
+version: '3.8'
+
+services:
+  dfir-workbench:
+    build: .
+    container_name: dfir-memory-workbench
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      # Uncomment and set these for production:
+      # - DFIR_SECRET_KEY=your-long-random-hex-secret
+      # - DFIR_API_KEY=your-api-key-here
+      # - DFIR_MAX_UPLOAD_MB=65536
+    volumes:
+      - ./workspace:/app/workspace
+      - ./logs:/app/logs
+    # Optional: load from .env file
+    # env_file:
+    #   - .env
