@@ -640,11 +640,12 @@ def api_get_curated_yara_rules():
 
 
 if __name__ == "__main__":
+    host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", "8000"))
-    logger.info(f"DFIR Web Application starting on http://127.0.0.1:{port}")
-    record_activity("SYSTEM", "Startup", f"DFIR Web Application initialized on http://127.0.0.1:{port}")
+    logger.info(f"DFIR Web Application starting on http://{host}:{port}")
+    record_activity("SYSTEM", "Startup", f"DFIR Web Application initialized on http://{host}:{port}")
     print("=" * 65)
-    print(f"  DFIR Web Application ready: http://127.0.0.1:{port}")
+    print(f"  DFIR Web Application ready: http://{host}:{port}")
     print(f"  Live User Activity Log : {ACTIVITY_LOG_FILE}")
     print("=" * 65)
 
@@ -657,4 +658,4 @@ if __name__ == "__main__":
             pass
 
     threading.Thread(target=_open_browser, daemon=True).start()
-    app.run(host="127.0.0.1", port=port, debug=False, threaded=True)
+    app.run(host=host, port=port, debug=False, threaded=True)

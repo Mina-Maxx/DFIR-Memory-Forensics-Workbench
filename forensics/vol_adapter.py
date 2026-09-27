@@ -27,14 +27,19 @@ class VolAdapter:
                 return [sys.executable, "--vol-worker"]
 
         # 2. Check system PATH
-        vol_path = shutil.which("vol") or shutil.which("vol.py") or shutil.which("volatility")
+        vol_path = (shutil.which("vol") or shutil.which("vol.py") or
+                    shutil.which("volatility") or shutil.which("vol3") or
+                    shutil.which("volatility3"))
         if vol_path:
             return [vol_path]
 
-        # 3. Check Python scripts folder
-        scripts_vol = os.path.join(os.path.dirname(sys.executable), "Scripts", "vol.exe")
-        if os.path.isfile(scripts_vol):
-            return [scripts_vol]
+        # 3. Check Python bin / scripts folder (cross-platform for Windows & Linux)
+        py_dir = os.path.dirname(sys.executable)
+        for candidate_name in ("vol", "vol.py", "vol3", "volatility", "vol.exe"):
+            for sub in ("bin", "Scripts", ""):
+                candidate_path = os.path.join(py_dir, sub, candidate_name) if sub else os.path.join(py_dir, candidate_name)
+                if os.path.isfile(candidate_path):
+                    return [candidate_path]
 
         # 4. Check if vol.py exists relative to imported volatility3 package
         try:

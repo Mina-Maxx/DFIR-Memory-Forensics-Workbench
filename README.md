@@ -76,20 +76,38 @@ DFIR-Web-App/
 
 ---
 
-## 🚀 طريقة التشغيل (How to Run)
+## 🚀 طريقة التشغيل عبر الأنظمة (Cross-Platform Execution)
 
-### الطريقة الأولى: بنقرة زر واحدة (Windows)
-اضغط مرتين على الملف:
-```cmd
-run.bat
-```
-سيقوم السكربت ببدء الخادم وفتح المتصفح تلقائياً على الرابط: `http://127.0.0.1:8000`.
+المنصة متوافقة بنسبة 100% مع أنظمة **Windows** و **Linux** (بما في ذلك توزيعات التحقيق الجنائي مثل Kali Linux و SANS SIFT و REMnux و Ubuntu و Debian) بالإضافة إلى **Docker**.
 
-### الطريقة الثانية: من موجه الأوامر (Terminal)
+### 1. على نظام ويندوز (Windows):
+* **بنقرة زر واحدة:** اضغط مرتين على الملف `run.bat`
+* **أو عبر موجه الأوامر:**
+  ```cmd
+  python app.py
+  ```
+
+### 2. على نظام لينكس / ماك (Linux / macOS):
+* **عبر سكربت التشغيل:**
+  ```bash
+  chmod +x run.sh
+  ./run.sh
+  ```
+* **أو يدوياً عبر موجه الأوامر:**
+  ```bash
+  python3 -m venv venv
+  source venv/bin/activate
+  pip install -r requirements.txt
+  python3 app.py
+  ```
+  *(في السيرفرات السحابية ومختبرات التحقيق عن بعد، يمكنك تمرير `HOST=0.0.0.0 PORT=8000 python3 app.py` لإتاحة الوصول للواجهة عبر الشبكة)*
+
+### 3. عبر الحاويات (Docker & Docker Compose):
+تشغيل المنصة في حاوية Linux معزولة بضغطة زر واحدة:
 ```bash
-python app.py
+docker compose up -d
 ```
-ثم افتح متصفحك على: `http://127.0.0.1:8000`.
+ثم افتح متصفحك على: `http://localhost:8000`.
 
 ---
 
